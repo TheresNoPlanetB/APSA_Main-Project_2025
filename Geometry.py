@@ -39,6 +39,5 @@ class Geometry:
         """
         return f"Geometry(name={self.name}, xa={self.xa}, ya={self.ya}, xb={self.xb}, yb={self.yb}, xc={self.xc}, yc={self.yc})"
 
-# Example usage:
-# geometry1 = Geometry("Geometry 1", 0, 0, 18.5, 0, 37, 0)
-# print(geometry1)
+
+
