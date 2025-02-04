@@ -13,10 +13,12 @@ class Bus:
         :param name: Name of the bus
         :param base_kv: Nominal voltage level of the bus (in kV)
         """
+
         self.name = name  # Name of the bus
         self.base_kv = base_kv  # Nominal voltage level of the bus
         self.index = Bus.bus_count  # Unique index for the bus
         Bus.bus_count += 1
+
     def __str__(self):
         """
         Return a string representation of the Bus object.

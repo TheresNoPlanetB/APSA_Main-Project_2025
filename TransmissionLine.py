@@ -29,24 +29,37 @@ class TransmissionLine:
         """
         Calculate base impedance and admittance values for the transmission line.
         """
+
+        def get_perUnitZ(self, Vbase, Sbase)
+
+
         # Placeholder for base impedance calculation (zbase)
         self.zbase = None  # Replace with actual calculation
 
         # Placeholder for base admittance calculation (ybase)
         self.ybase = None  # Replace with actual calculation
 
+
+        #Per-Unitize it
+         +v +s
+
     def calc_admittances(self):
         """
         Calculate series impedance, shunt admittance, and series admittance for the transmission line.
         """
+
+
         # Placeholder for series impedance calculation (zseries)
         self.zseries = None  # Replace with actual calculation
+
 
         # Placeholder for shunt admittance calculation (yshunt)
         self.yshunt = None  # Replace with actual calculation
 
+
         # Placeholder for series admittance calculation (yseries)
         self.yseries = None  # Replace with actual calculation
+
 
     def calc_yprim(self):
         """
@@ -54,6 +67,8 @@ class TransmissionLine:
         """
         # Placeholder for admittance matrix calculation (yprim)
         self.yprim = None  # Replace with actual calculation
+
+
 
     def __str__(self):
         """
