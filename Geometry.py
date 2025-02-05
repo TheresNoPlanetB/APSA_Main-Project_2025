@@ -31,7 +31,11 @@ class Geometry:
         Calculate the equivalent distance (Deq) for the geometry.
         """
         # Placeholder for Deq calculation
-        self.Deq = None  # Replace with actual calculation
+        Dab = abs((self.ya-self.yb)/(self.xa-self.xb))
+        Dbc = abs((self.yb-self.yc)/(self.xb-self.xc))
+        Dac = abs((self.ya-self.yc)/(self.xa-self.xc))
+
+        self.Deq = (Dab * Dbc * Dac)**(1/3)  # Replace with actual calculation
 
     def __str__(self):
         """
