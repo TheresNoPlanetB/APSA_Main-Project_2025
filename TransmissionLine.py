@@ -48,10 +48,8 @@ class TransmissionLine:
         Calculate series impedance, shunt admittance, and series admittance for the transmission line.
         """
 
-
-        # Placeholder for series impedance calculation (zseries)
-        self.zseries = None  # Replace with actual calculation
-
+        # Calculate series admittance
+        self.yseries = 1 / self.zseries if self.zseries != 0 else complex(0, 0)
 
         # Placeholder for shunt admittance calculation (yshunt)
         self.yshunt = None  # Replace with actual calculation
