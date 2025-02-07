@@ -1,7 +1,6 @@
 from Bus import Bus
 from Transformer import Transformer
 from TransmissionLine import TransmissionLine
-from Conductor import Conductor
 
 class Circuit:
     def __init__(self,name):
@@ -35,5 +34,5 @@ class Circuit:
 
     def __repr__(self):
         return (f"Circuit(name={self.name}, Buses={list(self.buses.keys())}, "
-            f"Transformers={list(self.transformers.keys())}, "
+            f"Transformers={list(self.transformer.keys())}, "
             f"Transmission Lines={list(self.transmission_line.keys())})")
