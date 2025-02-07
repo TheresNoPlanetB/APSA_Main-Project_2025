@@ -2,9 +2,6 @@ from Bus import Bus
 from Transformer import Transformer
 from TransmissionLine import TransmissionLine
 from Conductor import Conductor
-from Bundle import Bundle
-from Geometry import Geometry
-
 
 class Circuit:
     def __init__(self,name):
