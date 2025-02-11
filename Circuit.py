@@ -1,4 +1,4 @@
-from Bus import Bus
+from bus import Bus
 from Transformer import Transformer
 from TransmissionLine import TransmissionLine
 
@@ -12,6 +12,7 @@ class Circuit:
 
     def add_bus(self, name, base_kv):
         # Adding bus into circuit
+
         if name in self.buses:
             raise ValueError(f"Bus {name} already exists in the circuit.")
         self.buses[name] = Bus(name,base_kv)
