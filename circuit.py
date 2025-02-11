@@ -1,6 +1,9 @@
 from bus import Bus
 from transformer import Transformer
-from transmissionLine import TransmissionLine
+from transmissionline import TransmissionLine
+from bundle import Bundle
+from conductor import Conductor
+from geometry import Geometry
 
 class Circuit:
     def __init__(self,name: str):
@@ -9,6 +12,9 @@ class Circuit:
         self.buses = {}
         self.transformer = {}
         self.transmission_line = {}
+        self.bundle = {}
+        self.conductor = {}
+        self.geometry = {}
 
     def add_bus(self, name, base_kv):
         # Adding bus into circuit
