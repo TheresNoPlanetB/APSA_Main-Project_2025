@@ -27,7 +27,7 @@ class Conductor:
         return f"Conductor(name={self.name}, diam={self.diam}, GMR={self.GMR}, resistance={self.resistance}, ampacity={self.ampacity})"
 
 if __name__ == '__main__':
-    from Conductor import Conductor
+    from conductor import Conductor
 
     conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
     print(

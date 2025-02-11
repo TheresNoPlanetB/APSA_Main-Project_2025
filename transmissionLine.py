@@ -30,7 +30,6 @@ class TransmissionLine:
         self.calc_yprim()  # calculate yprim
 
 
-
     def calc_base_values(self):
         """
         Calculate base impedance and admittance values for the transmission line.
