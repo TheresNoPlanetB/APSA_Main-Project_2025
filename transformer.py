@@ -74,9 +74,8 @@ class Transformer:
 
 #Testing
 if __name__ == '__main__':
-
-    import Transformer from transformer
-    import Bus from bus
+    import Transformer
+    import Bus
 
     bus1 = Bus("Bus 1", 20)
     bus2 = Bus("Bus 2", 230)

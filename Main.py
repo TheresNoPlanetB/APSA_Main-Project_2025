@@ -1,16 +1,13 @@
-#seeking to validate the entire code
+#seeking to validate the project
 
-import Circuit from circuit
-
+from circuit import Circuit
 from bus import Bus
-
 from transformer import Transformer
-
 from transmissionLine import TransmissionLine
-
 from conductor import Conductor
 from bundle import Bundle
 from geometry import Geometry
+
 
 # Step 1: Create a circuit
 circuit1 = Circuit("Test Circuit: ⚡ validating...")
@@ -60,3 +57,5 @@ try:
     circuit1.add_transmission_line("Line 2", "Bus1", "Bus3", bundle1, geometry1, 10)
 except ValueError as e:
     print("‼️Error Caught:", e)
+
+#if __name__ == '__main__':

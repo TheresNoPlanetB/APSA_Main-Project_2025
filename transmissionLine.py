@@ -35,10 +35,10 @@ class TransmissionLine:
         Calculate base impedance and admittance values for the transmission line.
         """
 
-        # Placeholder for base impedance calculation (zbase)
+        # Base impedance calculation (zbase)
         self.zbase = self.bus1.base_kv**2/self.S_Base  # Replace with actual calculation
 
-        # Placeholder for base admittance calculation (ybase)
+        # Base admittance calculation (ybase)
         self.ybase = 1/self.zbase  # Replace with actual calculation
 
 
@@ -54,22 +54,22 @@ class TransmissionLine:
         #calculate per unit xseries
         self.xseries_pu = self.xseries/self.zbase
 
-        # Placeholder for series resistance calculation (rseries)
+        # Series resistance calculation (rseries)
         self.rseries = self.bundle.conductor.resistance / self.bundle.num_conductors
 
         #calculate per unit rseries
         self.rseries_pu = self.rseries/self.zbase
 
-        # Placeholder for series impedance calculation (zseries)
+        #Series impedance calculation (zseries)
         self.zseries = complex(self.rseries, self.xseries)
 
-        #calculate per unit zseries
+        #Calculate per unit zseries
         self.zseries_pu = self.zseries/self.zbase
 
-        # Placeholder for shunt admittance calculation (yshunt)
+        # Shunt admittance calculation (yshunt)
         self.yshunt = 2 * np.pi * self.f * (2 * np.pi * 8.854 * 10 ** -12) / (np.log(self.geometry.Deq / self.bundle.DSC)) * 1609.34  # Replace with actual calculation
 
-        # calculate per unit yshunt
+        # Calculate per unit yshunt
         self.yshunt_pu = self.yshunt / self.ybase
 
         # Calculate series admittance
@@ -82,10 +82,8 @@ class TransmissionLine:
         """
         Calculate and populate the admittance matrix (yprim) for the transmission line.
         """
-        # Placeholder for admittance matrix calculation (yprim)
+        # Admittance matrix calculation (yprim)
         self.yprim_pu = np.array([[self.yseries_pu + self.yshunt_pu/2, -1/self.yseries_pu],[-1/(self.yseries_pu), self.yseries_pu + self.yshunt_pu/2]])  # Replace with actual calculation
-
-
 
     def __str__(self):
         """
@@ -95,11 +93,11 @@ class TransmissionLine:
 
 if __name__ == '__main__':
 
-    from Bus import Bus
-    from Geometry import Geometry
-    from Bundle import Bundle
-    from Conductor import Conductor
-    from TransmissionLine import TransmissionLine
+    from bus import Bus
+    from geometry import Geometry
+    from bundle import Bundle
+    from conductor import Conductor
+    from transmissionLine import TransmissionLine
 
     bus1 = Bus("Bus 1", 20)
     bus2 = Bus("Bus 2", 230)

@@ -1,5 +1,5 @@
-from Transformer import Transformer
-from Bus import Bus
+from transformer import Transformer
+from bus import Bus
 
 bus1 = Bus("Bus 1", 20)
 bus2 = Bus("Bus 2", 230)
