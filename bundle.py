@@ -1,5 +1,7 @@
+from conductor import Conductor
+
 class Bundle:
-    def __init__(self, name, num_conductors, spacing, conductor):
+    def __init__(self, name: str, num_conductors: int, spacing: float, conductor: Conductor):
         self.name = name #assign name of bundle
         self.num_conductors = num_conductors #assign number of conductors in bundle
         self.spacing = spacing #assign spacing between conductors
@@ -39,8 +41,8 @@ class Bundle:
             self.DSC = 1.091 * (self.radius * self.diameter**3)**(1/4)
 
 if __name__ == '__main__':
-    from Bundle import Bundle
-    from Conductor import Conductor
+    from bundle import Bundle
+    from conductor import Conductor
 
     conductor1 = Conductor("conductor1", 5, 6, 8, 10)
     bundle1 = Bundle("Bundle 1", 2, 1.5, conductor1)

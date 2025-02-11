@@ -83,11 +83,11 @@ class TransmissionLine:
 
 if __name__ == '__main__':
 
-    from Bus import Bus
+    from bus import Bus
     from Geometry import Geometry
-    from Bundle import Bundle
-    from Conductor import Conductor
-    from TransmissionLine import TransmissionLine
+    from bundle import Bundle
+    from conductor import Conductor
+    from transmissionLine import TransmissionLine
 
     bus1 = Bus("Bus 1", 20)
     bus2 = Bus("Bus 2", 230)

@@ -1,9 +1,9 @@
-from Bus import Bus
-from Transformer import Transformer
-from TransmissionLine import TransmissionLine
+from bus import Bus
+from transformer import Transformer
+from transmissionLine import TransmissionLine
 
 class Circuit:
-    def __init__(self,name):
+    def __init__(self,name: str):
         # Initializing attributes thru dictionaries
         self.name = name
         self.buses = {}

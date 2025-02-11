@@ -3,7 +3,7 @@ class Conductor:
     The Conductor class models the physical and electrical characteristics of a conductor used in transmission lines.
     """
 
-    def __init__(self, name, diam, GMR, resistance, ampacity):
+    def __init__(self, name: str, diam: float, GMR: float, resistance: float, ampacity: float):
         """
         Initialize the Conductor object with the given parameters.
 
@@ -26,7 +26,7 @@ class Conductor:
         return f"Conductor(name={self.name}, diam={self.diam}, GMR={self.GMR}, resistance={self.resistance}, ampacity={self.ampacity})"
 
 if __name__ == '__main__':
-    from Conductor import Conductor
+    from conductor import Conductor
 
     conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
     print(
