@@ -54,7 +54,7 @@ class Circuit:
         for transmissionline in self.transmission_line.values():
             transmission_line_geometry = transmissionline.geometry
             transmission_line_summary += (
-                f"- {transmissionline.name} (From {transmissionline.bus1.name} to {transmissionline.bus2.name}, Length: {transmissionline.length} km)\n"
+                f"- {transmissionline.name} (From {transmissionline.bus1.name} to {transmissionline.bus2.name}, Length: {transmissionline.length} mi)\n"
                 f"    Geometry: {transmission_line_geometry.name}, Deq: {transmission_line_geometry.Deq}\n")
 
         # Combine all summaries

@@ -6,7 +6,7 @@ class Transformer:
     Transformers connect two buses with specific parameters such as power rating, impedance, and X/R ratio.
     """
 
-    def __init__(self, name, bus1, bus2, power_rating, impedance_percent, x_over_r_ratio):
+    def __init__(self, name: str, bus1: str, bus2: str, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float):
         """
         Initialize the Transformer object with the given parameters.
 
@@ -72,6 +72,7 @@ class Transformer:
         """
         return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})")
 
+"""
 #Testing
 if __name__ == '__main__':
 
@@ -84,3 +85,4 @@ if __name__ == '__main__':
     print(f"Name:{transformer1.name}, Bus1 name:{transformer1.bus1.name}, Bus2 name:{transformer1.bus2.name}, power rating:{transformer1.power_rating}, impedance_percent:{transformer1.impedance_percent}, x_over_r_ratio:{transformer1.x_over_r_ratio}")
     print(f"impedance{transformer1.zt}, admittance{transformer1.yt}")
     print(f" matrix validation:{transformer1.yprim}")
+"""
