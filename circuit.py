@@ -1,9 +1,12 @@
 from bus import Bus
 from transformer import Transformer
 from transmissionline import TransmissionLine
+<<<<<<< HEAD
 from bundle import Bundle
 from conductor import Conductor
 from geometry import Geometry
+=======
+>>>>>>> parent of 82e8441 (Update circuit.py)
 
 class Circuit:
     def __init__(self,name: str):
@@ -41,4 +44,8 @@ class Circuit:
     def __repr__(self):
         return (f"Circuit(name={self.name}, Buses={list(self.buses.keys())}, "
             f"Transformers={list(self.transformer.keys())}, "
+<<<<<<< HEAD
             f"Transmission Lines={list(self.transmission_line.keys())})")
+=======
+            f"Transmission Lines={list(self.transmission_line.keys())})")
+>>>>>>> parent of 82e8441 (Update circuit.py)
