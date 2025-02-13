@@ -8,4 +8,3 @@ print(f"Name:{transformer1.name}, Bus1 name:{transformer1.bus1.name}, Bus2 name:
 print(f"impedance{transformer1.zt}, admittance{transformer1.yt}")
 print(f" matrix validation:{transformer1.yprim}")
 
-if __name__ == '__main__':

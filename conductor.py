@@ -19,7 +19,6 @@ class Conductor:
         self.resistance = resistance  # Electrical resistance of the conductor
         self.ampacity = ampacity  # Maximum current carrying capacity of the conductor
 
-
     def __str__(self):
         """
         Return a string representation of the Conductor object.
