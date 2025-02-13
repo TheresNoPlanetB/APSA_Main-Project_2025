@@ -16,6 +16,7 @@ class Transformer:
         :param impedance_percent: Impedance of the transformer (in percent)
         :param x_over_r_ratio: X/R ratio of the transformer
         """
+
         self.name = name  # Name of the transformer
         self.bus1 = bus1  # The first bus connected by the transformer
         self.bus2 = bus2  # The second bus connected by the transformer
@@ -41,6 +42,7 @@ class Transformer:
 
         # Calculate total impedance
         self.zt = complex(self.resistance, self.reactance)
+
 
     def calc_admittance(self):
         """
@@ -74,8 +76,8 @@ class Transformer:
 
 #Testing
 if __name__ == '__main__':
-    import Transformer
-    import Bus
+    #import Transformer from transformer
+    from bus import Bus
 
     bus1 = Bus("Bus 1", 20)
     bus2 = Bus("Bus 2", 230)

@@ -58,4 +58,6 @@ try:
 except ValueError as e:
     print("‼️Error Caught:", e)
 
-#if __name__ == '__main__':
+
+if __name__ == '__main__':
+    transformer1 = Transformer("T1", bus1, bus2, 125, 8.5, 10)
