@@ -18,20 +18,17 @@ print("Transmission Lines Initialized:", circuit1.transmission_line)
 
 # Adding Buses
 circuit1.add_bus("Bus1", 230)
-circuit1.add_bus("Bus2", 115)
-circuit1.add_bus("Bus3", 138)
+circuit1.add_bus("Bus2", 230)
 
 # Adding Transformer
 circuit1.add_transformer("T1", "Bus1", "Bus2", 100, 8, 10, 100)
-circuit1.add_transformer("T2", "Bus2", "Bus3", 100, 8, 10, 100)
 
 # Adding Transmission Line
 conductor1 = Conductor("Conductor A", 0.642, 0.0217, 0.385, 460)
 bundle1 = Bundle("Bundle A", 2, 1.5, conductor1)
-geometry1 = Geometry("Geometry 1", 0, 0, 18.5, 0, 37, 0)
+geometry1 = Geometry("Geometry 1", 5, 10, 18.5, 15, 37, 20)
 
 circuit1.add_transmission_line("Line 1", "Bus1", "Bus2", bundle1, geometry1, 10)
-circuit1.add_transmission_line("Line 2", "Bus2", "Bus3", bundle1, geometry1, 10)
 
 # Step 4: Print network summary
 print(circuit1.network_summary())

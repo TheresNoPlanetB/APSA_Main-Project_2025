@@ -31,9 +31,9 @@ class Geometry:
         Calculate the equivalent distance (Deq) for the geometry.
         """
         # Placeholder for Deq calculation
-        Dab = abs((self.ya-self.yb)/(self.xa-self.xb))
-        Dbc = abs((self.yb-self.yc)/(self.xb-self.xc))
-        Dac = abs((self.ya-self.yc)/(self.xa-self.xc))
+        Dab = ((self.xa - self.xb) ** 2 + (self.ya - self.yb) ** 2) ** 0.5
+        Dbc = ((self.xb - self.xc) ** 2 + (self.yb - self.yc) ** 2) ** 0.5
+        Dac = ((self.xa - self.xc) ** 2 + (self.ya - self.yc) ** 2) ** 0.5
 
         self.Deq = (Dab * Dbc * Dac)**(1/3)  # Replace with actual calculation
 

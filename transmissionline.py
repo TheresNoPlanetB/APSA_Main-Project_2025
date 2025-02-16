@@ -49,7 +49,7 @@ class TransmissionLine:
         """
 
         # Placeholder for series reactance calculation (xseries)
-        self.xseries = (2 * np.pi * self.f) * (2 * 10 ** (-7)) * np.log(self.geometry.Deq / self.bundle.DSL)# Replace with actual calculation
+        self.xseries = (2 * np.pi * self.f) * (2 * 10 ** (-7)) * np.log((self.geometry.Deq) / (self.bundle.DSL))# Replace with actual calculation
 
         #calculate per unit xseries
         self.xseries_pu = self.xseries/self.zbase
@@ -79,11 +79,13 @@ class TransmissionLine:
         self.yseries_pu = self.yseries / self.ybase
 
     def calc_yprim(self):
-        """
-        Calculate and populate the admittance matrix (yprim) for the transmission line.
-        """
-        # Placeholder for admittance matrix calculation (yprim)
-        self.yprim_pu = np.array([[self.yseries_pu + self.yshunt_pu/2, -1/self.yseries_pu],[-1/(self.yseries_pu), self.yseries_pu + self.yshunt_pu/2]])  # Replace with actual calculation
+        # Ensures that the series admittance is correctly computer
+        self.yseries_pu = 1 / self.zseries_pu if self.zseries != 0 else complex(0, 0)
+
+        # Compute Yprim matrix
+        self.yprim_pu = np.array([
+            [self.yshunt_pu / 2 + self.yseries_pu, -self.yseries_pu],
+            [-self.yseries_pu, self.yshunt_pu / 2 + self.yseries_pu]])
 
 
 
@@ -95,11 +97,11 @@ class TransmissionLine:
 
 if __name__ == '__main__':
 
-    from Bus import Bus
-    from Geometry import Geometry
-    from Bundle import Bundle
-    from Conductor import Conductor
-    from TransmissionLine import TransmissionLine
+    from bus import Bus
+    from geometry import Geometry
+    from bundle import Bundle
+    from conductor import Conductor
+    from transmissionline import TransmissionLine
 
     bus1 = Bus("Bus 1", 20)
     bus2 = Bus("Bus 2", 230)

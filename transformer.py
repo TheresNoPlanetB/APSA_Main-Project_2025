@@ -23,6 +23,7 @@ class Transformer:
         self.power_rating = power_rating  # Power rating of the transformer
         self.impedance_percent = impedance_percent  # Impedance of the transformer (in percent)
         self.x_over_r_ratio = x_over_r_ratio  # X/R ratio of the transformer
+        self.base_mva = 100
 
         # Calculate impedance and admittance values
         self.calc_impedance()
@@ -33,12 +34,21 @@ class Transformer:
         """
         Calculate the impedance (zt) of the transformer.
         """
-        # Convert impedance from percent to per unit
-        z_base = (self.impedance_percent / 100) * (self.power_rating / 100)
+        # Compute base impedance z_base using the tranformer's voltage and power rating
+        z_base = (self.bus1.base_kv ** 2) / (self.power_rating * 1e6) # Ohms
 
-        # Calculate resistance and reactance based on X/R ratio
-        self.resistance = z_base / (1 + self.x_over_r_ratio ** 2) ** 0.5
-        self.reactance = self.resistance * self.x_over_r_ratio
+        # Convert percentage impedance to per unit impedance
+        z_pu = self.impedance_percent / 100
+
+        # Calculate the acutal transformer impednace (zt)
+        zt = z_pu * z_base # Ohms
+
+        # Calculate reactance using X/R ratio
+
+        self.reactance = zt / np.sqrt(1 + (1 / self.x_over_r_ratio) ** 2)
+
+        # Calculate resistance
+        self.resistance = self.reactance / self.x_over_r_ratio
 
         # Calculate total impedance
         self.zt = complex(self.resistance, self.reactance)
@@ -72,17 +82,16 @@ class Transformer:
         """
         return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})")
 
-"""
+
 #Testing
 if __name__ == '__main__':
 
-    import Transformer from transformer
-    import Bus from bus
+    from bus import Bus
 
-    bus1 = Bus("Bus 1", 20)
+    bus1 = Bus("Bus 1", 230)
     bus2 = Bus("Bus 2", 230)
-    transformer1 = Transformer("T1", bus1, bus2, 125, 8.5, 10)
-    print(f"Name:{transformer1.name}, Bus1 name:{transformer1.bus1.name}, Bus2 name:{transformer1.bus2.name}, power rating:{transformer1.power_rating}, impedance_percent:{transformer1.impedance_percent}, x_over_r_ratio:{transformer1.x_over_r_ratio}")
+    transformer1 = Transformer("T1", bus1, bus2, 100, 8.5, 10, 100)
+    print(f"Name:{transformer1.name}, Bus1 name:{transformer1.bus1.name}, Bus2 name:{transformer1.bus2.name}, power rating:{transformer1.power_rating}, impedance_percent:{transformer1.impedance_percent}, x_over_r_ratio:{transformer1.x_over_r_ratio}, MVA:{transformer1.base_mva}")
     print(f"impedance{transformer1.zt}, admittance{transformer1.yt}")
     print(f" matrix validation:{transformer1.yprim}")
-"""
+
