@@ -34,34 +34,30 @@ class Circuit:
             raise ValueError("Both buses must be added to the circuit before adding a transmission line.")
         self.transmission_lines[name] = TransmissionLine(name, self.buses[bus1], self.buses[bus2], bundle, geometry, length)
 
-
-
-
-
     def calc_ybus(self):
-        #Computes the system-wide Ybus matrix by summing the primitive admittance matrices.
+        # Ybus matrix by summing the primitive admittance matrices.
 
-        # Step 1: Initialize Ybus matrix (N x N zero matrix)
+        # Initialize Ybus matrix (N x N zero matrix)
         N = len(self.buses)
         if N == 0:
             raise ValueError("No buses in the circuit to compute Ybus.")
 
         self.ybus = np.zeros((N, N), dtype=complex)  # Initialize as complex numbers
 
-        # Step 2: Map bus names to indices for Ybus
+        # Bus names to indices for Ybus
         bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
 
-        # Step 3: Process each transformer and transmission line
+        # Retrieve info from transformer and transmission line
         for transformer in self.transformer.values():
             bus1, bus2 = transformer.bus1.name, transformer.bus2.name
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
             Yprim = transformer.yprim  # Get primitive admittance matrix
 
-            # Step 3.1: Add self-admittance (diagonal elements)
+            # Add self-admittance (diagonal elements)
             self.ybus[idx1, idx1] += Yprim[0, 0]
             self.ybus[idx2, idx2] += Yprim[1, 1]
 
-            # Step 3.2: Add mutual admittance (off-diagonal elements, negative values)
+            # Add mutual admittance (off-diagonal elements, negative values)
             self.ybus[idx1, idx2] -= Yprim[0, 1]
             self.ybus[idx2, idx1] -= Yprim[1, 0]
 
@@ -70,29 +66,23 @@ class Circuit:
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
             Yprim = tline.yprim_pu  # Get primitive admittance matrix
 
-            # Step 3.1: Add self-admittance (diagonal elements)
+            # Add self-admittance (diagonal elements)
             self.ybus[idx1, idx1] += Yprim[0, 0]
             self.ybus[idx2, idx2] += Yprim[1, 1]
 
-            # Step 3.2: Add mutual admittance (off-diagonal elements, negative values)
+            # Add mutual admittance (off-diagonal elements, negative values)
             self.ybus[idx1, idx2] -= Yprim[0, 1]
             self.ybus[idx2, idx1] -= Yprim[1, 0]
 
-        # Step 4: Ensure numerical stability
+        # Numerical stability
         if np.any(np.diag(self.ybus) == 0):
             raise ValueError("Singular Ybus detected. Ensure all buses have self-admittance.")
-
-        print("Ybus Matrix Computed Successfully!")
 
     def get_ybus(self):
         #Returns the computed Ybus matrix.
         if self.ybus is None:
             raise ValueError("Ybus has not been computed. Run calc_ybus() first.")
         return self.ybus
-
-
-
-
 
     # Print out summary of network
     def network_summary(self):

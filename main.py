@@ -23,13 +23,13 @@ circuit1.add_transmission_line("Line 1", "Bus1", "Bus2", bundle1, geometry1, 10)
 # Print network summary
 print(circuit1.network_summary())
 
-"""
 # Compute Ybus matrix
-print("Computing Ybus Matrix...")
 circuit1.calc_ybus()
 
-# Retrieve and display the computed Ybus
+# Retrieve and display Ybus
 ybus_matrix = circuit1.get_ybus()
+
+# Print the Ybus matrix
 print("Ybus Matrix:")
-print(ybus_matrix)
-"""
+for row in ybus_matrix:
+    print(" ".join(f"{elem.real:.4f}{elem.imag:+.4f}j" for elem in row))
