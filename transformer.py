@@ -35,10 +35,10 @@ class Transformer:
         Calculate the impedance (zt) of the transformer.
         """
         # Compute base impedance z_base using the tranformer's voltage and power rating
-        z_base = (self.bus1.base_kv ** 2) / (self.power_rating * 1e6) # Ohms
+        z_base = ((self.bus1.base_kv * 1e3) ** 2) / (self.power_rating * 1e6) # Ohms
 
         # Convert percentage impedance to per unit impedance
-        z_pu = self.impedance_percent / 100
+        z_pu = (self.impedance_percent / 100) * (self.base_mva / self.power_rating)
 
         # Calculate the acutal transformer impednace (zt)
         zt = z_pu * z_base # Ohms
@@ -48,7 +48,7 @@ class Transformer:
         self.reactance = zt / np.sqrt(1 + (1 / self.x_over_r_ratio) ** 2)
 
         # Calculate resistance
-        self.resistance = self.reactance / self.x_over_r_ratio
+        self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0 # avoids division by 0
 
         # Calculate total impedance
         self.zt = complex(self.resistance, self.reactance)
