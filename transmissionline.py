@@ -49,13 +49,13 @@ class TransmissionLine:
         """
 
         # Placeholder for series reactance calculation (xseries)
-        self.xseries = (2 * np.pi * self.f) * (2 * 10 ** (-7)) * np.log((self.geometry.Deq) / (self.bundle.DSL))# Replace with actual calculation
+        self.xseries = (2 * np.pi * self.f) * (2 * 10 ** (-7)) * np.log((self.geometry.Deq) / (self.bundle.DSL)) * 1609 * self.length# Replace with actual calculation
 
         #calculate per unit xseries
         self.xseries_pu = self.xseries/self.zbase
 
         # Placeholder for series resistance calculation (rseries)
-        self.rseries = self.bundle.conductor.resistance / self.bundle.num_conductors
+        self.rseries = self.bundle.conductor.resistance / self.bundle.num_conductors * self.length
 
         #calculate per unit rseries
         self.rseries_pu = self.rseries/self.zbase
@@ -67,7 +67,7 @@ class TransmissionLine:
         self.zseries_pu = self.zseries/self.zbase
 
         # Placeholder for shunt admittance calculation (yshunt)
-        self.yshunt = 2 * np.pi * self.f * (2 * np.pi * 8.854 * 10 ** -12) / (np.log(self.geometry.Deq / self.bundle.DSC)) * 1609.34  # Replace with actual calculation
+        self.yshunt = 2 * np.pi * self.f * (2 * np.pi * 8.854 * 10 ** -12) / (np.log(self.geometry.Deq / self.bundle.DSC)) * 1609.34 * self.length  # Replace with actual calculation
 
         # calculate per unit yshunt
         self.yshunt_pu = self.yshunt / self.ybase
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     from conductor import Conductor
     from transmissionline import TransmissionLine
 
-    bus1 = Bus("Bus 1", 20)
+    bus1 = Bus("Bus 1", 230)
     bus2 = Bus("Bus 2", 230)
     conductor1 = Conductor("conductor1", 5, 6, 8, 10)
     bundle1 = Bundle("Bundle 1", 2, 1.5, conductor1)

@@ -6,7 +6,7 @@ class Transformer:
     Transformers connect two buses with specific parameters such as power rating, impedance, and X/R ratio.
     """
 
-    def __init__(self, name: str, bus1: str, bus2: str, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float):
+    def __init__(self, name: str, bus1: str, bus2: str, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float, v1: float, v2: float):
         """
         Initialize the Transformer object with the given parameters.
 
@@ -24,6 +24,8 @@ class Transformer:
         self.impedance_percent = impedance_percent  # Impedance of the transformer (in percent)
         self.x_over_r_ratio = x_over_r_ratio  # X/R ratio of the transformer
         self.base_mva = 100
+        self.v1 = v1
+        self.v2 = v2
 
         # Calculate impedance and admittance values
         self.calc_impedance()
@@ -35,13 +37,15 @@ class Transformer:
         Calculate the impedance (zt) of the transformer.
         """
         # Compute base impedance z_base using the tranformer's voltage and power rating
-        z_base = ((self.bus1.base_kv * 1e3) ** 2) / (self.power_rating * 1e6) # Ohms
+        z_base_sys = ((self.bus1.base_kv * 1e3) ** 2) / (self.base_mva * 1e6) # Ohms
+        z_base_xf = ((self.v1 * 1e3) ** 2) / (self.power_rating * 1e6)
+
 
         # Convert percentage impedance to per unit impedance
-        z_pu = (self.impedance_percent / 100) * (self.base_mva / self.power_rating)
+        z_pu = (self.impedance_percent / 100) * (z_base_xf / z_base_sys)
 
-        # Calculate the acutal transformer impednace (zt)
-        zt = z_pu * z_base # Ohms
+        # Calculate the actual transformer impedance (zt)
+        zt = z_pu
 
         # Calculate reactance using X/R ratio
 
@@ -90,8 +94,7 @@ if __name__ == '__main__':
 
     bus1 = Bus("Bus 1", 230)
     bus2 = Bus("Bus 2", 230)
-    transformer1 = Transformer("T1", bus1, bus2, 100, 8.5, 10, 100)
+    transformer1 = Transformer("T1", bus1, bus2, 100, 8.5, 10, 100, 230, 230)
     print(f"Name:{transformer1.name}, Bus1 name:{transformer1.bus1.name}, Bus2 name:{transformer1.bus2.name}, power rating:{transformer1.power_rating}, impedance_percent:{transformer1.impedance_percent}, x_over_r_ratio:{transformer1.x_over_r_ratio}, MVA:{transformer1.base_mva}")
     print(f"impedance{transformer1.zt}, admittance{transformer1.yt}")
     print(f" matrix validation:{transformer1.yprim}")
-
