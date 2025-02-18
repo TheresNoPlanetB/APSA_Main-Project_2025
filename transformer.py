@@ -16,6 +16,7 @@ class Transformer:
         :param power_rating: Power rating of the transformer (in MVA)
         :param impedance_percent: Impedance of the transformer (in percent)
         :param x_over_r_ratio: X/R ratio of the transformer
+        :param base_mva: Base MVA for per-unit calculations
         """
         self.name = name  # Name of the transformer
         self.bus1 = bus1  # The first bus connected by the transformer
@@ -23,7 +24,7 @@ class Transformer:
         self.power_rating = power_rating  # Power rating of the transformer
         self.impedance_percent = impedance_percent  # Impedance of the transformer (in percent)
         self.x_over_r_ratio = x_over_r_ratio  # X/R ratio of the transformer
-        self.base_mva = 100
+        self.base_mva = base_mva  # Base MVA for per-unit calculations
 
         # Calculate impedance and admittance values
         self.calc_impedance()
@@ -34,21 +35,23 @@ class Transformer:
         """
         Calculate the impedance (zt) of the transformer.
         """
-        # Compute base impedance z_base using the tranformer's voltage and power rating
-        z_base = ((self.bus1.base_kv * 1e3) ** 2) / (self.power_rating * 1e6) # Ohms
+        # Compute base impedance z_base using the transformer's voltage and power rating
+        z_base = ((self.bus1.base_kv * 1e3) ** 2) / (self.power_rating * 1e6)  # Ohms
 
         # Convert percentage impedance to per unit impedance
         z_pu = (self.impedance_percent / 100) * (self.base_mva / self.power_rating)
 
-        # Calculate the acutal transformer impednace (zt)
-        zt = z_pu * z_base # Ohms
+        # Calculate the actual transformer impedance (zt)
+        zt = z_pu * z_base  # Ohms
+
+        # Per-unitize the impedance by dividing by z_base
+        zt_per_unit = zt / z_base
 
         # Calculate reactance using X/R ratio
-
-        self.reactance = zt / np.sqrt(1 + (1 / self.x_over_r_ratio) ** 2)
+        self.reactance = zt_per_unit / np.sqrt(1 + (1 / self.x_over_r_ratio) ** 2)
 
         # Calculate resistance
-        self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0 # avoids division by 0
+        self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0  # Avoids division by 0
 
         # Calculate total impedance
         self.zt = complex(self.resistance, self.reactance)
@@ -83,7 +86,7 @@ class Transformer:
         return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})")
 
 
-#Testing
+# Testing
 if __name__ == '__main__':
 
     from bus import Bus
@@ -92,6 +95,5 @@ if __name__ == '__main__':
     bus2 = Bus("Bus 2", 230)
     transformer1 = Transformer("T1", bus1, bus2, 100, 8.5, 10, 100)
     print(f"Name:{transformer1.name}, Bus1 name:{transformer1.bus1.name}, Bus2 name:{transformer1.bus2.name}, power rating:{transformer1.power_rating}, impedance_percent:{transformer1.impedance_percent}, x_over_r_ratio:{transformer1.x_over_r_ratio}, MVA:{transformer1.base_mva}")
-    print(f"impedance{transformer1.zt}, admittance{transformer1.yt}")
-    print(f" matrix validation:{transformer1.yprim}")
-
+    print(f"Impedance (per unit): {transformer1.zt}, Admittance: {transformer1.yt}")
+    print(f"Y-Prim matrix:\n{transformer1.yprim}")
