@@ -124,3 +124,19 @@ class Circuit:
         return (f"Circuit(name={self.name}, Buses={list(self.buses.keys())}, "
                 f"Transformers={list(self.transformer.keys())}, "
                 f"Transmission Lines={list(self.transmission_lines.keys())})")
+
+if __name__ == '__main__':
+    from bus import Bus
+
+    circuit1 = Circuit("Test Circuit")
+
+    # Check attributes initialization
+    print(circuit1.name)
+    print(type(circuit1.name))
+    print(circuit1.buses)
+    print(type(circuit1.buses))
+
+    # Add and retrieve equipment components
+    circuit1.add_bus("Bus1", 230)
+    print(circuit1.buses["Bus1"])
+    print(type(circuit1.buses["Bus1"]))
