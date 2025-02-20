@@ -1,122 +1,98 @@
 import numpy as np
-class TransmissionLine:
+
+class Transformer:
     """
-    The TransmissionLine class models a transmission line connecting two buses in a power system.
-    This class uses the Conductor and Geometry subclasses to determine its electrical characteristics.
+    The Transformer class models a transformer in a power system.
+    Transformers connect two buses with specific parameters such as power rating, impedance, and X/R ratio.
     """
 
-    def __init__(self, name, bus1, bus2, bundle, geometry, length):
+    def __init__(self, name: str, bus1: str, bus2: str, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float, v1: float, v2: float):
         """
-        Initialize the TransmissionLine object with the given parameters.
+        Initialize the Transformer object with the given parameters.
 
-        :param name: Name of the transmission line
-        :param bus1: The first bus connected by the transmission line
-        :param bus2: The second bus connected by the transmission line
-        :param bundle: The bundle of conductors used in the transmission line
-        :param geometry: The physical arrangement of conductors in the transmission line
-        :param length: Length of the transmission line (in miles)
+        :param name: Name of the transformer
+        :param bus1: The first bus connected by the transformer
+        :param bus2: The second bus connected by the transformer
+        :param power_rating: Power rating of the transformer (in MVA)
+        :param impedance_percent: Impedance of the transformer (in percent)
+        :param x_over_r_ratio: X/R ratio of the transformer
         """
+        self.name = name  # Name of the transformer
+        self.bus1 = bus1  # The first bus connected by the transformer
+        self.bus2 = bus2  # The second bus connected by the transformer
+        self.power_rating = power_rating  # Power rating of the transformer
+        self.impedance_percent = impedance_percent  # Impedance of the transformer (in percent)
+        self.x_over_r_ratio = x_over_r_ratio  # X/R ratio of the transformer
+        self.base_mva = base_mva  # Base MVA for per-unit calculations
+        self.v1 = v1  # Primary voltage of the transformer
+        self.v2 = v2  # Secondary voltage of the transformer
 
-        self.name = name  # Name of the transmission line
-        self.bus1 = bus1  # The first bus connected by the transmission line
-        self.bus2 = bus2  # The second bus connected by the transmission line
-        self.bundle = bundle  # The bundle of conductors used in the transmission line
-        self.geometry = geometry  # The physical arrangement of conductors in the transmission line
-        self.length = length  # Length of the transmission line
-        self.f = 60
-        self.S_Base = 100
-        self.calc_base_values() # calculate base values
-        self.calc_admittances()  # calculate admittances
-        self.calc_yprim()  # calculate yprim
+        # Calculate impedance and admittance values
+        self.calc_impedance()
+        self.calc_admittance()
+        self.calc_yprim()
 
-
-    def calc_base_values(self):
+    def calc_impedance(self):
         """
-        Calculate base impedance and admittance values for the transmission line.
+        Calculate the impedance (zt) of the transformer.
         """
+        # Compute base impedance z_base using the transformer's voltage and power rating
+        z_base_sys = ((self.bus1.base_kv * 1e3) ** 2) / (self.base_mva * 1e6)  # Ohms
+        z_base_xf = ((self.v1 * 1e3) ** 2) / (self.power_rating * 1e6)  # Ohms
 
-        # Placeholder for base impedance calculation (zbase)
-        self.zbase = self.bus1.base_kv**2/self.S_Base  # Replace with actual calculation
+        # Convert percentage impedance to per unit impedance
+        z_pu = (self.impedance_percent / 100) * (z_base_xf / z_base_sys)
 
-        # Placeholder for base admittance calculation (ybase)
-        self.ybase = 1/self.zbase  # Replace with actual calculation
+        # Calculate the actual transformer impedance (zt)
+        zt = z_pu
 
+        # Calculate reactance using X/R ratio
+        self.reactance = zt / np.sqrt(1 + (1 / self.x_over_r_ratio) ** 2)
 
+        # Calculate resistance
+        self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0  # avoids division by 0
 
-    def calc_admittances(self):
+        # Calculate total impedance
+        self.zt = complex(self.resistance, self.reactance)
+
+    def calc_admittance(self):
         """
-        Calculate series impedance, shunt admittance, and series admittance for the transmission line.
+        Calculate the admittance (yt) of the transformer.
         """
-
-        # Placeholder for series reactance calculation (xseries)
-        self.xseries = (2 * np.pi * self.f) * (2 * 10 ** (-7)) * np.log((self.geometry.Deq) / (self.bundle.DSL)) * 1609 * self.length# Replace with actual calculation
-
-        #calculate per unit xseries
-        self.xseries_pu = self.xseries/self.zbase
-
-        # Placeholder for series resistance calculation (rseries)
-        self.rseries = self.bundle.conductor.resistance / self.bundle.num_conductors * self.length
-
-        #calculate per unit rseries
-        self.rseries_pu = self.rseries/self.zbase
-
-        # Placeholder for series impedance calculation (zseries)
-        self.zseries = complex(self.rseries, self.xseries)
-
-        #calculate per unit zseries
-        self.zseries_pu = self.zseries/self.zbase
-
-        # Placeholder for shunt admittance calculation (yshunt)
-        self.yshunt = 2 * np.pi * self.f * (2 * np.pi * 8.854 * 10 ** -12) / (np.log(self.geometry.Deq / self.bundle.DSC)) * 1609.34 * self.length  # Replace with actual calculation
-
-        # calculate per unit yshunt
-        self.yshunt_pu = self.yshunt / self.ybase
-
-        # Calculate series admittance
-        self.yseries = 1 / self.zseries if self.zseries != 0 else complex(0, 0)
-
-        # calculate per unit yshunt
-        self.yseries_pu = self.yseries / self.ybase
+        # Admittance is the reciprocal of impedance
+        if self.zt != 0:
+            self.yt = 1 / self.zt
+        else:
+            self.yt = complex(0, 0)
 
     def calc_yprim(self):
-        # Ensures that the series admittance is correctly computer
-        self.yseries_pu = 1 / self.zseries_pu if self.zseries != 0 else complex(0, 0)
+        """
+        Calculate and populate the admittance matrix (yprim) for the transformer.
+        """
+        # Calculate the series admittance (inverse of series impedance)
+        y_series = self.yt
 
-        # Compute Yprim matrix
-        self.yprim_pu = np.array([
-            [self.yshunt_pu / 2 + self.yseries_pu, -self.yseries_pu],
-            [-self.yseries_pu, self.yshunt_pu / 2 + self.yseries_pu]])
-
-
+        # Form the admittance matrix
+        self.yprim = np.array([
+            [y_series, -y_series],
+            [-y_series, y_series]
+        ])
 
     def __str__(self):
         """
-        Return a string representation of the TransmissionLine object.
+        Return a string representation of the Transformer object.
         """
-        return f"TransmissionLine(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, length={self.length})"
+        return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})")
 
+
+# Testing
 if __name__ == '__main__':
 
     from bus import Bus
-    from geometry import Geometry
-    from bundle import Bundle
-    from conductor import Conductor
-    from transmissionline import TransmissionLine
 
     bus1 = Bus("Bus 1", 230)
     bus2 = Bus("Bus 2", 230)
-    conductor1 = Conductor("conductor1", 5, 6, 8, 10)
-    bundle1 = Bundle("Bundle 1", 2, 1.5, conductor1)
-    geometry1 = Geometry("Geometry 1", 5, 10, 18.5, 15, 37, 20)
-    line1 = TransmissionLine("Line 1", bus1, bus2, bundle1, geometry1, 10)
-    print(f"Name:{line1.name}, Bus1 Name:{line1.bus1.name}, Bus2 Name:{line1.bus2.name}, Length:{line1.length}")
-    print(f"Base Impedance: zbase = {line1.zbase}")
-    print(f"Base Admittance: ybase = {line1.ybase}")
-    print(f"Series Impedance per Unit: zseries_pu = {line1.zseries_pu}")
-    print(f"Series Resistance per Unit: rseries_pu = {line1.rseries_pu}")
-    print(f"Series Reactance per Unit: xseries_pu = {line1.xseries_pu}")
-    print(f"Equivalent Distance per phase: Deq = {line1.geometry.Deq}")
-
-    print(f"Shunt Admittance per Unit: yshunt_pu = {line1.yshunt_pu}")
-    print(f"Series Admittance per Unit: yseries_pu = {line1.yseries_pu}")
-    print(f"Admittance Matrix per Unit: yprim_pu = {line1.yprim_pu}")
+    transformer1 = Transformer("T1", bus1, bus2, 100, 8.5, 10, 100, 230, 230)
+    print(f"Name: {transformer1.name}, Bus1 name: {transformer1.bus1.name}, Bus2 name: {transformer1.bus2.name}, power rating: {transformer1.power_rating}, impedance_percent: {transformer1.impedance_percent}, x_over_r_ratio: {transformer1.x_over_r_ratio}, MVA: {transformer1.base_mva}")
+    print(f"Impedance (per unit): {transformer1.zt}, Admittance: {transformer1.yt}")
+    print(f"Y-Prim matrix:\n{transformer1.yprim}")
