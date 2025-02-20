@@ -5,7 +5,7 @@ import numpy as np
 
 class Circuit:
     def __init__(self,name: str):
-        # Initializing attributes thru dictionaries
+        # Initializing attributes thruough dictionaries
         self.name = name
         self.buses = {} # Dictionary of Bus objects
         self.transformer = {} # Dictionary of Transformer objects
