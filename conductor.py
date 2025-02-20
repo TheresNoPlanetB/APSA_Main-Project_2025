@@ -26,6 +26,7 @@ class Conductor:
         """
         return f"Conductor(name={self.name}, diam={self.diam}, GMR={self.GMR}, resistance={self.resistance}, ampacity={self.ampacity})"
 
+
 if __name__ == '__main__':
     from conductor import Conductor
 
