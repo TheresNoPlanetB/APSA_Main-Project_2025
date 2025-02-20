@@ -1,5 +1,7 @@
+from conductor import Conductor
+
 class Bundle:
-    def __init__(self, name, num_conductors, spacing, conductor):
+    def __init__(self, name: str, num_conductors: int, spacing: float, conductor: Conductor):
         self.name = name #assign name of bundle
         self.num_conductors = num_conductors #assign number of conductors in bundle
         self.spacing = spacing #assign spacing between conductors

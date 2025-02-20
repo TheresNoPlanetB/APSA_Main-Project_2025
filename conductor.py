@@ -3,7 +3,7 @@ class Conductor:
     The Conductor class models the physical and electrical characteristics of a conductor used in transmission lines.
     """
 
-    def __init__(self, name, diam, GMR, resistance, ampacity):
+    def __init__(self, name: str, diam: float, GMR: float, resistance: float, ampacity: float):
         """
         Initialize the Conductor object with the given parameters.
 
@@ -18,7 +18,6 @@ class Conductor:
         self.GMR = GMR  # Geometric Mean Radius of the conductor
         self.resistance = resistance  # Electrical resistance of the conductor
         self.ampacity = ampacity  # Maximum current carrying capacity of the conductor
-
 
     def __str__(self):
         """
