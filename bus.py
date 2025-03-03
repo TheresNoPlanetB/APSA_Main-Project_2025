@@ -27,7 +27,7 @@ class Bus:
         """
         Return a string representation of the Bus object.
         """
-        return f"Bus(name={self.name}, base_kv={self.base_kv}, index={self.index})"
+        return f"Bus(name={self.name}, base_kv={self.base_kv}, base_kv={self.bus_type}, index={self.index})"
 
     """
     Define Bus_count and increment as per buses added

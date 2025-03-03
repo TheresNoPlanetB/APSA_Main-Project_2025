@@ -7,13 +7,13 @@ from geometry import Geometry
 circuit1 = Circuit("Circuit")
 
 # Adding Buses
-circuit1.add_bus("Bus1", 230)
-circuit1.add_bus("Bus2", 230)
-circuit1.add_bus("Bus3", 230)
-circuit1.add_bus("Bus4", 230)
-circuit1.add_bus("Bus5", 230)
-circuit1.add_bus("Bus6", 230)
-circuit1.add_bus("Bus7", 230)
+circuit1.add_bus("Bus1", 230,"PV Bus")
+circuit1.add_bus("Bus2", 230,"PV Bus")
+circuit1.add_bus("Bus3", 230,"PV Bus")
+circuit1.add_bus("Bus4", 230,"PV Bus")
+circuit1.add_bus("Bus5", 230,"PV Bus")
+circuit1.add_bus("Bus6", 230,"PV Bus")
+circuit1.add_bus("Bus7", 230,"PV Bus")
 
 # Adding Transformers
 circuit1.add_transformer("T1", "Bus1", "Bus2", 125, 8.5, 10, 100, 34.64, 230)

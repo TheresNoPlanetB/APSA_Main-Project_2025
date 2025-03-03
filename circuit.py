@@ -12,11 +12,11 @@ class Circuit:
         self.transmission_lines = {} # Dictionary of T-Line objects
         self.ybus = None # Ybus matrix placeholder
 
-    def add_bus(self, name, base_kv):
+    def add_bus(self, name, base_kv, bus_type):
         # Adding bus into circuit
         if name in self.buses:
             raise ValueError(f"Bus {name} already exists in the circuit.")
-        self.buses[name] = Bus(name, float(base_kv))
+        self.buses[name] = Bus(name, float(base_kv), str(bus_type))
 
     def add_transformer(self, name, bus1, bus2, power_rating, impedance_percent, x_over_r_ratio, base_mva, v1, v2):
         # Adding transformer into circuit
@@ -90,7 +90,7 @@ class Circuit:
         # Summarize buses
         bus_summary = "Buses in the Circuit:\n"
         for bus in self.buses.values():  # Correctly accessing the values (which are dicts)
-            bus_summary += f"- {bus.name} (Base kV: {bus.base_kv})\n"
+            bus_summary += f"- {bus.name} (Base kV: {bus.base_kv}, Bus Type: {bus.bus_type})\n"
 
         # Summarize transformers with more detailed information
         transformer_summary = "Transformers in the Circuit:\n"
@@ -137,6 +137,6 @@ if __name__ == '__main__':
     print(type(circuit1.buses))
 
     # Add and retrieve equipment components
-    circuit1.add_bus("Bus1", 230)
+    circuit1.add_bus("Bus1", 230, "PV Bus")
     print(circuit1.buses["Bus1"])
     print(type(circuit1.buses["Bus1"]))
