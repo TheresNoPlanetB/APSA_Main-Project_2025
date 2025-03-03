@@ -6,7 +6,7 @@ class Transformer:
     Transformers connect two buses with specific parameters such as power rating, impedance, and X/R ratio.
     """
 
-    def __init__(self, name: str, bus1: str, bus2: str, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float, v1: float, v2: float):
+    def __init__(self, name: str, bus1, bus2, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float, v1: float, v2: float):
         """
         Initialize the Transformer object with the given parameters.
 
