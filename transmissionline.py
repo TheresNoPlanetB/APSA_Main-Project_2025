@@ -97,10 +97,10 @@ if __name__ == '__main__':
     from geometry import Geometry
     from bundle import Bundle
     from conductor import Conductor
-    from transmissionLine import TransmissionLine
+    from transmissionline import TransmissionLine
 
-    bus1 = Bus("Bus 1", 20)
-    bus2 = Bus("Bus 2", 230)
+    bus1 = Bus("Bus 1", 20, "PV Bus")
+    bus2 = Bus("Bus 2", 230, "Slack Bus")
     conductor1 = Conductor("conductor1", 5, 6, 8, 10)
     bundle1 = Bundle("Bundle 1", 2, 1.5, conductor1)
     geometry1 = Geometry("Geometry 1", 5, 10, 18.5, 15, 37, 20)
