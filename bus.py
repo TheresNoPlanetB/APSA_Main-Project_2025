@@ -6,7 +6,7 @@ class Bus:
     bus_count = 0
     # Class variable to keep count of bus instances
 
-    def __init__(self, name, base_kv):
+    def __init__(self, name, base_kv, bus_type):
         """
         Initialize the Bus object with the given parameters.
 
@@ -19,7 +19,7 @@ class Bus:
         self.index = Bus.bus_count  # Unique index for the bus
         self.vpu = 1
         self.delta = 0
-        self.bus_type = "pq"
+        self.bus_type = bus_type
         self.validate_bus_type()
         Bus.bus_count += 1
 
