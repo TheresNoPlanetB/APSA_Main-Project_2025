@@ -15,7 +15,7 @@ if __name__ == '__main__':
     from load import Load
     from bus import Bus
 
-    bus1 = Bus("bus1", 50)
+    bus1 = Bus("bus1", 50, "PV Bus")
     load1 = Load("Load1", bus1, 230, 145)
     print(f"name: {load1.name}, bus: {bus1.name} @ {bus1.base_kv}V, real_power: {load1.real_power}W, reactive_power: {load1.reactive_power}VAR")
 

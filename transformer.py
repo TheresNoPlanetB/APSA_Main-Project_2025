@@ -90,8 +90,8 @@ if __name__ == '__main__':
 
     from bus import Bus
 
-    bus1 = Bus("Bus 1", 230)
-    bus2 = Bus("Bus 2", 230)
+    bus1 = Bus("Bus 1", 230, "PV Bus")
+    bus2 = Bus("Bus 2", 230, "Slack Bus")
     transformer1 = Transformer("T1", bus1, bus2, 100, 8.5, 10, 100, 230, 230)
     print(f"Name: {transformer1.name}, Bus1 name: {transformer1.bus1.name}, Bus2 name: {transformer1.bus2.name}, power rating: {transformer1.power_rating}, impedance_percent: {transformer1.impedance_percent}, x_over_r_ratio: {transformer1.x_over_r_ratio}, MVA: {transformer1.base_mva}")
     print(f"Impedance (per unit): {transformer1.zt}, Admittance: {transformer1.yt}")
