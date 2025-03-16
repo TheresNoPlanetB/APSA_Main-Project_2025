@@ -1,5 +1,6 @@
 import numpy as np
 from bus import Bus
+
 class Transformer:
     """
     The Transformer class models a transformer in a power system.
@@ -50,7 +51,7 @@ class Transformer:
         self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0  # avoids division by 0
 
         # Calculate total impedance
-        self.zt = np.round(complex(self.resistance, self.reactance), 5)
+        self.zt = np.round(complex(self.resistance, self.reactance), 6)
 
     def calc_admittance(self):
         """
@@ -73,7 +74,7 @@ class Transformer:
         self.yprim = np.round(np.array([
             [y_series, -y_series],
             [-y_series, y_series]
-        ]), decimals = 3)
+        ]), decimals = 2)
 
     def __str__(self):
         """
