@@ -54,12 +54,12 @@ class Circuit:
             Yprim = transformer.yprim  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
-            self.ybus[idx1, idx1] += Yprim[0, 0]
-            self.ybus[idx2, idx2] += Yprim[1, 1]
+            self.ybus[idx1, idx1] = Yprim[0, 0]
+            self.ybus[idx2, idx2] = Yprim[1, 1]
 
             # Add mutual admittance (off-diagonal elements, negative values)
-            self.ybus[idx1, idx2] -= Yprim[0, 1]
-            self.ybus[idx2, idx1] -= Yprim[1, 0]
+            self.ybus[idx1, idx2] = Yprim[0, 1]
+            self.ybus[idx2, idx1] = Yprim[1, 0]
 
         for tline in self.transmission_lines.values():
             bus1, bus2 = tline.bus1.name, tline.bus2.name
@@ -67,12 +67,12 @@ class Circuit:
             Yprim = tline.yprim_pu  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
-            self.ybus[idx1, idx1] += Yprim[0, 0]
-            self.ybus[idx2, idx2] += Yprim[1, 1]
+            self.ybus[idx1, idx1] = Yprim[0, 0]
+            self.ybus[idx2, idx2] = Yprim[1, 1]
 
             # Add mutual admittance (off-diagonal elements, negative values)
-            self.ybus[idx1, idx2] -= Yprim[0, 1]
-            self.ybus[idx2, idx1] -= Yprim[1, 0]
+            self.ybus[idx1, idx2] = Yprim[0, 1]
+            self.ybus[idx2, idx1] = Yprim[1, 0]
 
         # Numerical stability
         if np.any(np.diag(self.ybus) == 0):

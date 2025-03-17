@@ -81,7 +81,7 @@ class TransmissionLine:
         self.zseries_pu = self.zseries/self.zbase
 
         # Shunt admittance calculation (yshunt)
-        self.yshunt = 2 * np.pi * self.f * ((2 * np.pi * 8.854 * 10 ** -12) / (np.log(self.geometry.Deq / self.bundle.DSC))) * 1609.34 * self.length  # Replace with actual calculation
+        self.yshunt = (1j * 2 * np.pi * self.f) * ((2 * np.pi * 8.854 * 10 ** -12) / (np.log(self.geometry.Deq / self.bundle.DSC))) * 1609.34 * self.length  # Replace with actual calculation
 
         # Calculate per unit yshunt
         self.yshunt_pu = self.yshunt / self.ybase
@@ -97,7 +97,7 @@ class TransmissionLine:
         Calculate and populate the admittance matrix (yprim) for the transmission line.
         """
         # Admittance matrix calculation (yprim)
-        self.yprim_pu = np.array([[self.yseries_pu + self.yshunt_pu/2, -1/self.yseries_pu],[-1/(self.yseries_pu), self.yseries_pu + self.yshunt_pu/2]])  # Replace with actual calculation
+        self.yprim_pu = np.array([[self.yseries_pu + (self.yshunt_pu/2), -self.yseries_pu],[-self.yseries_pu, self.yseries_pu + (self.yshunt_pu/2)]])  # Replace with actual calculation
 
     def __str__(self):
         """
@@ -127,8 +127,8 @@ if __name__ == '__main__':
     #print(f"Equivalent Distance per phase: Deq = {line1.geometry.Deq}")
 
     print(f"Shunt Admittance per Unit: yshunt_pu = {line1.yshunt_pu}")
-    #print(f"Series Admittance per Unit: yseries_pu = {line1.yseries_pu}")
-    #print(f"Admittance Matrix per Unit: yprim_pu = {line1.yprim_pu}")
+    print(f"Series Admittance per Unit: yseries_pu = {line1.yseries_pu}")
+    print(f"Admittance Matrix per Unit: yprim_pu = {line1.yprim_pu}")
 
 
 

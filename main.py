@@ -43,4 +43,4 @@ ybus_matrix = circuit1.get_ybus()
 # Print the Ybus matrix
 print("Ybus Matrix:")
 for row in ybus_matrix:
-    print(" ".join(f"{elem.real:.4f}{elem.imag:+.4f}j" for elem in row))
+    print(" ".join(f"{elem.real:.2f}{elem.imag:+.2f}j" for elem in row))

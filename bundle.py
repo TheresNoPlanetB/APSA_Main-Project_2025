@@ -47,7 +47,7 @@ if __name__ == '__main__':
     conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
     bundle1 = Bundle("Bundle A", 2, 1.5, conductor1)
     print(
-        f"Name: {bundle1.name}, Number of conductor: {bundle1.num_conductors}, Spacing: {bundle1.spacing}, Conductor:{bundle1.conductor.name}")
+        f"Name: {bundle1.name}, Number of conductor: {bundle1.num_conductors}, Spacing: {bundle1.spacing}, Conductor: {bundle1.conductor.name}")
     print(f"DSL: {bundle1.DSL}, DSC: {bundle1.DSC}")
 
 
