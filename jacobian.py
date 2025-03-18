@@ -1,96 +1,95 @@
 import numpy as np
 
 class Jacobian:
-    def __init__(self, buses, ybus, angles, voltages):
-        """
-        Initializes the Jacobian object with buses, Ybus matrix, voltage angles and magnitudes.
+    """
+    The Jacobian class calculates the Jacobian matrix for the Newton-Raphson power flow method.
+    It consists of four submatrices: J1 (dP/dδ), J2 (dP/dV), J3 (dQ/dδ), and J4 (dQ/dV).
+    """
 
-        """
-        self.buses = buses #List of Bus objects
-        self.ybus = ybus  #Admittance matrix of the system (Ybus)
-        self.angles = angles # Voltage angles of buses
-        self.voltages = voltages # Voltage magnitudes of buses
-        self.J = None  # Will store the full Jacobian matrix
+    def __init__(self, buses, ybus, angles, voltages):
+        self.buses = buses
+        self.ybus = ybus
+        self.angles = angles
+        self.voltages = voltages
+        self.J1 = None
+        self.J2 = None
+        self.J3 = None
+        self.J4 = None
+        self.J = None
 
     def calc_jacobian(self):
         """
-        Calculates the Jacobian matrix by computing each sub-matrix: J1, J2, J3, J4.
+        Calculate the full Jacobian matrix by computing its four submatrices.
         """
-        # Number of buses excluding the slack bus
-        n = len(self.buses) - 1
+        self.J1 = self.calc_J1()
+        self.J2 = self.calc_J2()
+        self.J3 = self.calc_J3()
+        self.J4 = self.calc_J4()
+        self.construct_jacobian()
 
-        # Initialize the four sub-matrices: J1, J2, J3, J4
-        J1 = np.zeros((n, n))
-        J2 = np.zeros((n, n))
-        J3 = np.zeros((n, n))
-        J4 = np.zeros((n, n))
+    def calc_J1(self):
+        """
+        Calculate the submatrix J1 (dP/dδ).
+        """
+        # Placeholder for J1 calculation
+        J1 = np.zeros((len(self.buses), len(self.buses)))
+        # Implement the actual calculation here
+        return J1
 
-        for i in range(n):
-            for j in range(n):
-                if i != j:  # Skip diagonal terms for simplicity
-                    # Compute elements for J1, J2, J3, J4
-                    J1[i, j] = self.dP_dDelta(i, j)
-                    J2[i, j] = self.dP_dV(i, j)
-                    J3[i, j] = self.dQ_dDelta(i, j)
-                    J4[i, j] = self.dQ_dV(i, j)
-                else:
-                    # Diagonal terms are handled differently
-                    J1[i, i] = self.dP_dDelta(i, i)
-                    J2[i, i] = self.dP_dV(i, i)
-                    J3[i, i] = self.dQ_dDelta(i, i)
-                    J4[i, i] = self.dQ_dV(i, i)
+    def calc_J2(self):
+        """
+        Calculate the submatrix J2 (dP/dV).
+        """
+        # Placeholder for J2 calculation
+        J2 = np.zeros((len(self.buses), len(self.buses)))
+        # Implement the actual calculation here
+        return J2
 
-        # Combine J1, J2, J3, J4 into the full Jacobian matrix
-        self.J = np.block([
-            [J1, J2],
-            [J3, J4]
-        ])
+    def calc_J3(self):
+        """
+        Calculate the submatrix J3 (dQ/dδ).
+        """
+        # Placeholder for J3 calculation
+        J3 = np.zeros((len(self.buses), len(self.buses)))
+        # Implement the actual calculation here
+        return J3
 
+    def calc_J4(self):
+        """
+        Calculate the submatrix J4 (dQ/dV).
+        """
+        # Placeholder for J4 calculation
+        J4 = np.zeros((len(self.buses), len(self.buses)))
+        # Implement the actual calculation here
+        return J4
+
+    def construct_jacobian(self):
+        """
+        Construct the full Jacobian matrix from its submatrices.
+        """
+        # Combine J1, J2, J3, J4 into the full Jacobian matrix J
+        self.J = np.block([[self.J1, self.J2], [self.J3, self.J4]])
+
+    def get_jacobian(self):
+        """
+        Return the full Jacobian matrix.
+        """
+        if self.J is None:
+            self.calc_jacobian()
         return self.J
 
-    def dP_dDelta(self, i, j):
-        """
-        Computes the partial derivative of real power with respect to the voltage angle (dP/dδ).
-        """
-        # Use Ybus matrix and current angles to compute the derivative
-        # Formula: dP/dδ = Im(Y_ij * V_i * V_j *)
-        V_i = self.voltages[i]
-        V_j = self.voltages[j]
-        angle_diff = self.angles[i] - self.angles[j]
-        y_ij = self.ybus[i, j]  # Admittance of the connection between bus i and bus j
+# Example usage
+if __name__ == '__main__':
+    # Example data
+    ybus = np.array([[1 + 2j, 3 + 4j, 5 + 6j], [7 + 8j, 9 + 10j, 11 + 12j], [13 + 14j, 15 + 16j, 17 + 18j]])
+    angles = np.array([0, 0.1, 0.2])
+    voltages = np.array([1.0, 1.02, 1.01])
+    buses = ['Bus 1', 'Bus 2', 'Bus 3']
 
-        return np.imag(y_ij * V_i * V_j * np.exp(-1j * angle_diff))
+    # Create Jacobian instance
+    jacobian = Jacobian(buses, ybus, angles, voltages)
 
-    def dP_dV(self, i, j):
-        """
-        Computes the partial derivative of real power with respect to the voltage magnitude (dP/dV).
-        """
-        # Use Ybus matrix and current voltages to compute the derivative
-        V_i = self.voltages[i]
-        V_j = self.voltages[j]
-        y_ij = self.ybus[i, j]
-
-        return np.real(y_ij * np.conj(V_j))
-
-    def dQ_dDelta(self, i, j):
-        """
-        Computes the partial derivative of reactive power with respect to the voltage angle (dQ/dδ).
-        """
-        # Formula: dQ/dδ = Re(Y_ij * V_i * V_j *)
-        V_i = self.voltages[i]
-        V_j = self.voltages[j]
-        angle_diff = self.angles[i] - self.angles[j]
-        y_ij = self.ybus[i, j]
-
-        return np.real(y_ij * V_i * V_j * np.exp(-1j * angle_diff))
-
-    def dQ_dV(self, i, j):
-        """
-        Computes the partial derivative of reactive power with respect to the voltage magnitude (dQ/dV).
-        """
-        # Use Ybus matrix and current voltages to compute the derivative
-        V_i = self.voltages[i]
-        V_j = self.voltages[j]
-        y_ij = self.ybus[i, j]
-
-        return -np.imag(y_ij * np.conj(V_j))
+    # Calculate and retrieve the Jacobian matrix
+    J = jacobian.get_jacobian()
+    print("Jacobian Matrix:")
+    print(J)
