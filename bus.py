@@ -1,5 +1,5 @@
 import numpy as np
-from systemsettings import SystemSettings
+from solution import SystemSettings
 
 class Bus:
     """

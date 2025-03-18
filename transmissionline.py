@@ -118,17 +118,17 @@ if __name__ == '__main__':
     bundle1 = Bundle("Bundle A", 2, 1.5, conductor1)
     geometry1 = Geometry("Geometry 1", 0, 0, 19.5, 0, 39, 0)
     line1 = TransmissionLine("Line 1", bus1, bus2, bundle1, geometry1, 10)
-    print(f"Name:{line1.name}, Bus1 Name:{line1.bus1.name}, Bus2 Name:{line1.bus2.name}, Length:{line1.length}")
-    print(f"Base Impedance: zbase = {line1.zbase}")
-    print(f"Base Admittance: ybase = {line1.ybase}")
+    #print(f"Name:{line1.name}, Bus1 Name:{line1.bus1.name}, Bus2 Name:{line1.bus2.name}, Length:{line1.length}")
+    #print(f"Base Impedance: zbase = {line1.zbase}")
+    #print(f"Base Admittance: ybase = {line1.ybase}")
     print(f"Series Impedance per Unit: zseries_pu = {line1.zseries_pu}")
     print(f"Series Resistance per Unit: rseries_pu = {line1.rseries_pu}")
     print(f"Series Reactance per Unit: xseries_pu = {line1.xseries_pu}")
-    print(f"Equivalent Distance per phase: Deq = {line1.geometry.Deq}")
+    #print(f"Equivalent Distance per phase: Deq = {line1.geometry.Deq}")
 
     print(f"Shunt Admittance per Unit: yshunt_pu = {line1.yshunt_pu}")
-    print(f"Series Admittance per Unit: yseries_pu = {line1.yseries_pu}")
-    print(f"Admittance Matrix per Unit: yprim_pu = {line1.yprim_pu}")
+    #print(f"Series Admittance per Unit: yseries_pu = {line1.yseries_pu}")
+    #print(f"Admittance Matrix per Unit: yprim_pu = {line1.yprim_pu}")
 
 
 

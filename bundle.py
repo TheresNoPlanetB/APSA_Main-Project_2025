@@ -7,7 +7,7 @@ class Bundle:
         self.spacing = spacing #assign spacing between conductors
         self.conductor = conductor #assign name of conductor
         self.diameter = self.conductor.diam #Define conductor Diameter
-        self.radius = self.diameter / 2 #Define conductor Radius
+        self.radius = self.diameter / 24 #Define conductor Radius
         self.calc_DSC() #calculate and assign value DSC
         self.calc_DSL() #calculate and assign value DSL
 
