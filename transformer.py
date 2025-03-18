@@ -26,7 +26,6 @@ class Transformer:
         self.base_mva = base_mva  # Base MVA for per-unit calculations
         self.v1 = v1  # Primary voltage of the transformer
         self.v2 = v2  # Secondary voltage of the transformer
-
         # Calculate impedance and admittance values
         self.calc_impedance()
         self.calc_admittance()
@@ -83,7 +82,6 @@ class Transformer:
         Return a string representation of the Transformer object.
         """
         return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})")
-
 
 # Testing
 if __name__ == '__main__':
