@@ -1,5 +1,5 @@
 import numpy as np
-from solution import SystemSettings
+from solution import Solution
 
 class Bus:
     """
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     ])
 
     # Create SystemSettings instance
-    system_settings = SystemSettings(ybus, [bus1, bus2, bus3])
+    system_settings = Solution(ybus, [bus1, bus2, bus3])
 
     # Compute mismatch
     mismatch_results = bus1.compute_power_mismatch(system_settings, voltages)
