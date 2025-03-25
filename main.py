@@ -33,6 +33,17 @@ circuit1.add_transmission_line("Line 4", "Bus4", "Bus6", bundle1, geometry1, 20)
 circuit1.add_transmission_line("Line 5", "Bus5", "Bus6", bundle1, geometry1, 10)
 circuit1.add_transmission_line("Line 6", "Bus4", "Bus5", bundle1, geometry1, 35)
 
+"""
+# Add Load
+circuit1.add_load("Load 3", "Bus 3", 110, 50)
+circuit1.add_load("Load 4", "Bus 4", 100, 70)
+circuit1.add_load("Load 5", "Bus 5", 100, 65)
+
+# Add Generator
+circuit1.add_generator("G1", "Bus 1", 100, 1.0)
+circuit1.add_generator("G2", "Bus 7", 200, 1.0)
+"""
+
 # Print network summary
 #print(circuit1.network_summary())
 
