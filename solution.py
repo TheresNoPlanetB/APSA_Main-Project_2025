@@ -1,6 +1,6 @@
 import numpy as np
 
-class SystemSettings:
+class Solution:
     def __init__(self, ybus, buses):
         """
         Initializes the system settings class with Ybus and buses.

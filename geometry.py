@@ -31,11 +31,11 @@ class Geometry:
         Calculate the equivalent distance (Deq) for the geometry.
         """
         # Placeholder for Deq calculation
-        Dab = ((self.xa - self.xb) ** 2 + (self.ya - self.yb) ** 2) ** 0.5
-        Dbc = ((self.xb - self.xc) ** 2 + (self.yb - self.yc) ** 2) ** 0.5
-        Dac = ((self.xa - self.xc) ** 2 + (self.ya - self.yc) ** 2) ** 0.5
+        Dab = ((self.xb - self.xa) ** 2 + (self.yb - self.ya) ** 2) ** 0.5
+        Dbc = ((self.xc - self.xb) ** 2 + (self.yc - self.yb) ** 2) ** 0.5
+        Dca = ((self.xa - self.xc) ** 2 + (self.ya - self.yc) ** 2) ** 0.5
 
-        self.Deq = (Dab * Dbc * Dac)**(1/3)  # Replace with actual calculation
+        self.Deq = (Dab * Dbc * Dca)**(1/3)  # Replace with actual calculation
 
     def __str__(self):
         """
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     from geometry import Geometry
 
-    geometry1 = Geometry("Geometry 1", 0, 0, 18.5, 0, 37, 0)
+    geometry1 = Geometry("Geometry 1", 0, 0, 19.5, 0, 39, 0)
     print(f"Name:{geometry1.name}, xa:{geometry1.xa}, ya:{geometry1.ya}, xb:{geometry1.xb}, yb:{geometry1.yb}, xc:{geometry1.xc}, yc:{geometry1.yc}")
     print(f"Deq:{geometry1.Deq}")
 

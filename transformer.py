@@ -1,4 +1,5 @@
 import numpy as np
+from bus import Bus
 
 class Transformer:
     """
@@ -6,7 +7,7 @@ class Transformer:
     Transformers connect two buses with specific parameters such as power rating, impedance, and X/R ratio.
     """
 
-    def __init__(self, name: str, bus1, bus2, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float, v1: float, v2: float):
+    def __init__(self, name: str, bus1: Bus, bus2: Bus, power_rating: float, impedance_percent: float, x_over_r_ratio: float, base_mva: float):
         """
         Initialize the Transformer object with the given parameters.
 
@@ -24,8 +25,9 @@ class Transformer:
         self.impedance_percent = impedance_percent  # Impedance of the transformer (in percent)
         self.x_over_r_ratio = x_over_r_ratio  # X/R ratio of the transformer
         self.base_mva = base_mva  # Base MVA for per-unit calculations
-        self.v1 = v1  # Primary voltage of the transformer
-        self.v2 = v2  # Secondary voltage of the transformer
+
+        self.s_base = 100
+
         # Calculate impedance and admittance values
         self.calc_impedance()
         self.calc_admittance()
@@ -35,14 +37,11 @@ class Transformer:
         """
         Calculate the impedance (zt) of the transformer.
         """
-        # Compute base impedance z_base using the transformer's voltage and power rating
-        z_base_sys = ((self.bus1.base_kv * 1e3) ** 2) / (self.base_mva * 1e6)  # Ohms
-        z_base_xf = ((self.v1 * 1e3) ** 2) / (self.power_rating * 1e6)  # Ohms
 
-        # Convert percentage impedance to per unit impedance
-        z_pu = (self.impedance_percent / 100) * (z_base_xf / z_base_sys)
+        # Transformer impedance percentage
+        z_pu = (self.impedance_percent / 100) * (self.s_base / self.power_rating)
 
-        # Calculate the actual transformer impedance (zt)
+        # Actual transformer impedance (zt)
         zt = z_pu
 
         # Calculate reactance using X/R ratio
@@ -52,7 +51,7 @@ class Transformer:
         self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0  # avoids division by 0
 
         # Calculate total impedance
-        self.zt = complex(self.resistance, self.reactance)
+        self.zt = np.round(complex(self.resistance, self.reactance), 6)
 
     def calc_admittance(self):
         """
@@ -72,25 +71,33 @@ class Transformer:
         y_series = self.yt
 
         # Form the admittance matrix
-        self.yprim = np.array([
+        self.yprim = np.round(np.array([
             [y_series, -y_series],
             [-y_series, y_series]
-        ])
+        ]), decimals = 2)
 
     def __str__(self):
         """
         Return a string representation of the Transformer object.
         """
-        return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})")
+        return f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})"
+
 
 # Testing
 if __name__ == '__main__':
 
     from bus import Bus
 
-    bus1 = Bus("Bus 1", 230, "PV Bus")
-    bus2 = Bus("Bus 2", 230, "Slack Bus")
-    transformer1 = Transformer("T1", bus1, bus2, 100, 8.5, 10, 100, 230, 230)
-    print(f"Name: {transformer1.name}, Bus1 name: {transformer1.bus1.name}, Bus2 name: {transformer1.bus2.name}, power rating: {transformer1.power_rating}, impedance_percent: {transformer1.impedance_percent}, x_over_r_ratio: {transformer1.x_over_r_ratio}, MVA: {transformer1.base_mva}")
-    print(f"Impedance (per unit): {transformer1.zt}, Admittance: {transformer1.yt}")
+    bus1 = Bus("Bus 1", 20, "Slack Bus")
+    bus2 = Bus("Bus 2", 230,"PQ Bus")
+    transformer1 = Transformer("T1", bus1, bus2, 125, 8.5, 10, 100)
+    print(f"Name: {transformer1.name}, Connection 1: {transformer1.bus1.name}, Bus Connection 2: {transformer1.bus2.name}, impedance_percent: {transformer1.impedance_percent}, x_over_r_ratio: {transformer1.x_over_r_ratio}")
+    print(f"Impedance (per unit): {transformer1.zt}, Admittance (per unit): {transformer1.yt}")
     print(f"Y-Prim matrix:\n{transformer1.yprim}")
+
+    bus6 = Bus("Bus 6", 230, "PQ Bus")
+    bus7 = Bus("Bus 7", 18, "PQ Bus")
+    transformer2 = Transformer("T2", bus6, bus7, 200, 10.5, 12, 100)
+    print(f"Name: {transformer2.name}, Connection 1: {transformer2.bus1.name}, Bus Connection 2: {transformer2.bus2.name}, impedance_percent: {transformer2.impedance_percent}, x_over_r_ratio: {transformer2.x_over_r_ratio}")
+    print(f"Impedance (per unit): {transformer2.zt}, Admittance (per unit): {transformer2.yt}")
+    print(f"Y-Prim matrix:\n{transformer2.yprim}")

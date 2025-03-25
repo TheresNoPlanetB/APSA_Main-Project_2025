@@ -17,5 +17,5 @@ if __name__ == '__main__':
 
     bus1 = Bus("bus1", 50, "PV Bus")
     generator1 = Generator("Gen1", bus1, 230, 145)
-    print(f"name: {generator1.name}, bus: {bus1.name} @ {bus1.base_kv}V, voltage_setpoint: {generator1.voltage_setpoint}MW, mw_setpoint: {generator1.mw_setpoint}MW")
+    print(f"Name: {generator1.name}, Bus: {bus1.name}, Voltage: {bus1.base_kv}V, Voltage Setpoint: {generator1.voltage_setpoint}V, MW Setpoint: {generator1.mw_setpoint}MW")
 
