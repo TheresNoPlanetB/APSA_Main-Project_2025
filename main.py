@@ -50,21 +50,6 @@ print(circuit1.network_summary())
 # Compute Ybus matrix
 circuit1.calc_ybus()
 
-# Retrieve Ybus Matrix
-ybus_matrix = circuit1.get_ybus()
-
-# Print 7 Bus Power System Ybus Matrix
-def print_ybus_table(ybus_matrix):
-    # Format matrix elements as "real + imag j"
-    formatted_matrix = [
-        [f"Bus {i+1}"] + [f"{elem.real:.2f}{elem.imag:+.2f}j" for elem in row]
-        for i, row in enumerate(ybus_matrix)
-    ]
-
-    # Print 7 Bus Power System Ybus Matrix
-    print("\nYbus Admittance Matrix:")
-    headers = ["Bus"] + [f"Bus {i+1}" for i in range(len(ybus_matrix))]
-    print(tabulate(formatted_matrix, headers=headers, tablefmt="grid"))
-
+# (This is where I want to call a method print ybus table from circuit class)
 # Display 7 Bus Power System Ybus Matrix
-print_ybus_table(ybus_matrix)
+circuit1.print_ybus_table()
