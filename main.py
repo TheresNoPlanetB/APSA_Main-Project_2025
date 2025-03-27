@@ -2,7 +2,6 @@ from circuit import Circuit
 from conductor import Conductor
 from bundle import Bundle
 from geometry import Geometry
-from tabulate import tabulate
 
 # Create circuit
 circuit1 = Circuit("Circuit")
@@ -33,7 +32,6 @@ circuit1.add_transmission_line("Line 4", "Bus 4", "Bus 6", bundle1, geometry1, 2
 circuit1.add_transmission_line("Line 5", "Bus 5", "Bus 6", bundle1, geometry1, 10)
 circuit1.add_transmission_line("Line 6", "Bus 4", "Bus 5", bundle1, geometry1, 35)
 
-
 # Add Load
 circuit1.add_load("Load 3", "Bus 3", 110, 50)
 circuit1.add_load("Load 4", "Bus 4", 100, 70)
@@ -50,6 +48,5 @@ print(circuit1.network_summary())
 # Compute Ybus matrix
 circuit1.calc_ybus()
 
-# (This is where I want to call a method print ybus table from circuit class)
 # Display 7 Bus Power System Ybus Matrix
 circuit1.print_ybus_table()
