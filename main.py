@@ -8,17 +8,17 @@ from tabulate import tabulate
 circuit1 = Circuit("Circuit")
 
 # Add Buses
-circuit1.add_bus("Bus1", 20,"Slack Bus")
-circuit1.add_bus("Bus2", 230,"PQ Bus")
-circuit1.add_bus("Bus3", 230,"PQ Bus")
-circuit1.add_bus("Bus4", 230,"PQ Bus")
-circuit1.add_bus("Bus5", 230,"PQ Bus")
-circuit1.add_bus("Bus6", 230,"PQ Bus")
-circuit1.add_bus("Bus7", 18,"PQ Bus")
+circuit1.add_bus("Bus 1", 20,"Slack Bus")
+circuit1.add_bus("Bus 2", 230,"PQ Bus")
+circuit1.add_bus("Bus 3", 230,"PQ Bus")
+circuit1.add_bus("Bus 4", 230,"PQ Bus")
+circuit1.add_bus("Bus 5", 230,"PQ Bus")
+circuit1.add_bus("Bus 6", 230,"PQ Bus")
+circuit1.add_bus("Bus 7", 18,"PQ Bus")
 
 # Add Transformers
-circuit1.add_transformer("T1", "Bus1", "Bus2", 125, 8.5, 10, 100)
-circuit1.add_transformer("T2", "Bus6", "Bus7", 200, 10.5, 12, 100)
+circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100)
+circuit1.add_transformer("T2", "Bus 6", "Bus 7", 200, 10.5, 12, 100)
 
 # Add Transmission Line Parameters
 conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
@@ -26,12 +26,12 @@ bundle1 = Bundle("Bundle A", 2, 1.5, conductor1)
 geometry1 = Geometry("Geometry 1", 0, 0, 19.5, 0, 39, 0)
 
 # Add Transmission Lines
-circuit1.add_transmission_line("Line 1", "Bus2", "Bus4", bundle1, geometry1, 10)
-circuit1.add_transmission_line("Line 2", "Bus2", "Bus3", bundle1, geometry1, 25)
-circuit1.add_transmission_line("Line 3", "Bus3", "Bus5", bundle1, geometry1, 20)
-circuit1.add_transmission_line("Line 4", "Bus4", "Bus6", bundle1, geometry1, 20)
-circuit1.add_transmission_line("Line 5", "Bus5", "Bus6", bundle1, geometry1, 10)
-circuit1.add_transmission_line("Line 6", "Bus4", "Bus5", bundle1, geometry1, 35)
+circuit1.add_transmission_line("Line 1", "Bus 2", "Bus 4", bundle1, geometry1, 10)
+circuit1.add_transmission_line("Line 2", "Bus 2", "Bus 3", bundle1, geometry1, 25)
+circuit1.add_transmission_line("Line 3", "Bus 3", "Bus 5", bundle1, geometry1, 20)
+circuit1.add_transmission_line("Line 4", "Bus 4", "Bus 6", bundle1, geometry1, 20)
+circuit1.add_transmission_line("Line 5", "Bus 5", "Bus 6", bundle1, geometry1, 10)
+circuit1.add_transmission_line("Line 6", "Bus 4", "Bus 5", bundle1, geometry1, 35)
 
 
 # Add Load
@@ -45,7 +45,7 @@ circuit1.add_generator("G2", "Bus 7", 200, 1.0)
 
 
 # Print network summary
-#print(circuit1.network_summary())
+print(circuit1.network_summary())
 
 # Compute Ybus matrix
 circuit1.calc_ybus()

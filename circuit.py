@@ -137,12 +137,12 @@ class Circuit:
         generator_summary = "Generators in the Circuit:\n"
         for generator in self.generators.values():
             generator_summary += (f"- {generator.name} on {generator.bus.name}: "
-                                  f"{generator.voltage_setpoint} V setpoint, {generator.mw_setpoint} MW\n")
+                                  f"{generator.voltage_setpoint} V setpoint, {generator.mw_setpoint} MW\n\n")
 
         load_summary = "Loads in the Circuit:\n"
         for load in self.loads.values():
             load_summary += (f"- {load.name} on {load.bus.name}: "
-                             f"{load.real_power} W real, {load.reactive_power} VAR reactive\n")
+                             f"{load.real_power} W, {load.reactive_power} VAR \n\n")
 
         # Combine all summaries
         network_summary = f"Network Summary for {self.name}:\n"
