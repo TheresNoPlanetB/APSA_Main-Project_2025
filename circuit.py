@@ -1,6 +1,8 @@
 from bus import Bus
 from transformer import Transformer
 from transmissionline import TransmissionLine
+from generator import Generator
+from load import Load
 import numpy as np
 
 
@@ -13,6 +15,8 @@ class Circuit:
         self.buses = {} # Dictionary of Bus objects
         self.transformer = {} # Dictionary of Transformer objects
         self.transmission_lines = {} # Dictionary of T-Line objects
+        self.generators = {} # Dictionary of generators
+        self.loads = {} # Dictionary of loads
         self.ybus = None # Ybus matrix placeholder
 
     def add_bus(self, name, base_kv, bus_type):
@@ -36,6 +40,20 @@ class Circuit:
         if bus1 not in self.buses or bus2 not in self.buses:
             raise ValueError("Both buses must be added to the circuit before adding a transmission line.")
         self.transmission_lines[name] = TransmissionLine(name, self.buses[bus1], self.buses[bus2], bundle, geometry, length)
+
+    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint):
+        if name in self.generators:
+            raise ValueError(f"Generator {name} already exists in the circuit.")
+        if bus_name not in self.buses:
+            raise ValueError(f"Bus {bus_name} must be added before attaching a generator.")
+        self.generators[name] = Generator(name, self.buses[bus_name], voltage_setpoint, mw_setpoint)
+
+    def add_load(self, name, bus_name, real_power, reactive_power):
+        if name in self.loads:
+            raise ValueError(f"Load {name} already exists in the circuit.")
+        if bus_name not in self.buses:
+            raise ValueError(f"Bus {bus_name} must be added before attaching a load.")
+        self.loads[name] = Load(name, self.buses[bus_name], real_power, reactive_power)
 
     def calc_ybus(self):
         # Ybus matrix by summing the primitive admittance matrices.
@@ -116,17 +134,30 @@ class Circuit:
                 f"    Admittance Matrix (Yprim) [pu]: \n"
                 f"{np.array2string(transmissionline.yprim_pu, precision=4, separator=', ')}\n\n")
 
+        generator_summary = "Generators in the Circuit:\n"
+        for generator in self.generators.values():
+            generator_summary += (f"- {generator.name} on {generator.bus.name}: "
+                                  f"{generator.voltage_setpoint} V setpoint, {generator.mw_setpoint} MW\n")
+
+        load_summary = "Loads in the Circuit:\n"
+        for load in self.loads.values():
+            load_summary += (f"- {load.name} on {load.bus.name}: "
+                             f"{load.real_power} W real, {load.reactive_power} VAR reactive\n")
+
         # Combine all summaries
         network_summary = f"Network Summary for {self.name}:\n"
-        network_summary += bus_summary + transformer_summary + transmission_line_summary
+        network_summary += bus_summary + transformer_summary + transmission_line_summary + generator_summary + load_summary
 
         return network_summary
 
     def __repr__(self):
         # Return a string representation of the circuit
-        return (f"Circuit(name={self.name}, Buses={list(self.buses.keys())}, "
+        return (f"Circuit(name={self.name}, "
+                f"Buses={list(self.buses.keys())}, "
                 f"Transformers={list(self.transformer.keys())}, "
-                f"Transmission Lines={list(self.transmission_lines.keys())})")
+                f"Transmission Lines={list(self.transmission_lines.keys())})"
+                f"Generators={list(self.generators.keys())})"
+                f"Loads={list(self.loads.keys())})")
 
 if __name__ == '__main__':
     from bus import Bus
