@@ -1,4 +1,7 @@
 import numpy as np
+from circuit import Circuit
+import pandas as pd
+
 
 class Solution:
     def __init__(self, ybus, buses):
