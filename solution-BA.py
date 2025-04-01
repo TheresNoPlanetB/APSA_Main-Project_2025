@@ -46,6 +46,7 @@ class Solution:
 
         return P_k_sum, Q_k_sum
 
+
 # Example validation
 if __name__ == "__main__":
     # Example Ybus matrix (2x2 for simplicity)

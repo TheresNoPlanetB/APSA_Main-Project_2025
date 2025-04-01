@@ -40,7 +40,7 @@ class Jacobian:
         """
         Calculate the submatrix J2 (dP/dV).
         """
-        # Placeholder for J2 calculation
+        # J2 calculation
         J2 = np.zeros((len(self.buses), len(self.buses)))
         # Implement the actual calculation here
         return J2
@@ -49,7 +49,7 @@ class Jacobian:
         """
         Calculate the submatrix J3 (dQ/dδ).
         """
-        # Placeholder for J3 calculation
+        #  J3 calculation
         J3 = np.zeros((len(self.buses), len(self.buses)))
         # Implement the actual calculation here
         return J3
@@ -58,9 +58,11 @@ class Jacobian:
         """
         Calculate the submatrix J4 (dQ/dV).
         """
-        # Placeholder for J4 calculation
+        # J4 calculation
         J4 = np.zeros((len(self.buses), len(self.buses)))
         # Implement the actual calculation here
+
+
         return J4
 
     def construct_jacobian(self):
