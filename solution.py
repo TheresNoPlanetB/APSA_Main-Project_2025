@@ -12,8 +12,16 @@ class Solution:
         """
         self.ybus = ybus #System admittance matrix
         self.buses = buses # List of Bus objects
+        self.voltages = []
+        self.S_i = []
+        self.P_i = []
+        self.Q_i = []
+        self.S_i_list = []
+        self.P_i_list = []
+        self.Q_i_list = []
 
-    def compute_power_injection(self, bus, voltages):
+
+    def compute_power_injection(self):
         """
         Calculate real and reactive power injection.
         :param bus: specific bus for power injection
@@ -21,15 +29,24 @@ class Solution:
         :P: Real power injection (W)
         :Q: Reactive power injection (VAR)
         """
-        bus_index = bus.index # Ensure the Bus class has an 'index' attribute
-        voltage = voltages[bus_index] # Get voltage for the bus
+        for key, value in self.buses.items():
+            self.voltages.append(value.base_kv)
+            #print(value.base_kv)
 
-        # Extract row of Ybus for this bus
-        ybus_row = self.ybus[bus_index, :]
+        for i in range(0, len(self.buses)):
+            #skip slack bus
+            if i != 1:
+                voltage = self.voltages[i] # Get voltage for the bus
+                ybus_row = self.ybus[i, :]
 
-        # Calculate complex power S_i
-        S_i = voltage * np.sum(ybus_row * np.conj(voltages)) # Complex power equation
-        P_i = np.real(S_i) # Real Power component
-        Q_i = np.imag(S_i) # Reactive Power component
+                # Calculate complex power S_i
+                S_i_temp = voltage * np.conj(np.sum(ybus_row) + voltage) # Complex power equation
+                self.S_i.append(S_i_temp)
+                self.P_i.append(np.real(S_i_temp)) # Real Power component
+                self.Q_i.append(np.imag(S_i_temp)) # Reactive Power component
 
-        return P_i, Q_i
+        #Remove Q7 due to Generator Bus 7 not having reactive power
+
+        Q7 = self.Q_i.pop()
+
+        return self.S_i, self.P_i, self.Q_i

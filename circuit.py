@@ -4,6 +4,7 @@ from transmissionline import TransmissionLine
 from generator import Generator
 from load import Load
 import numpy as np
+from tabulate import tabulate
 
 
 # Circuits are Cool :)
@@ -104,6 +105,19 @@ class Circuit:
         if self.ybus is None:
             raise ValueError("Ybus has not been computed. Run calc_ybus() first.")
         return self.ybus
+
+    # Print 7 Bus Power System Ybus Matrix
+    def print_ybus_table(self):
+        # Format matrix elements as "real + imag j"
+        formatted_matrix = [
+            [f"Bus {i + 1}"] + [f"{elem.real:.2f}{elem.imag:+.2f}j" for elem in row]
+            for i, row in enumerate(self.ybus)
+        ]
+
+        # Print 7 Bus Power System Ybus Matrix
+        print("\nYbus Admittance Matrix:")
+        headers = ["Bus"] + [f"Bus {i + 1}" for i in range(len(self.ybus))]
+        print(tabulate(formatted_matrix, headers=headers, tablefmt="grid"))
 
     # Print out summary of network
     def network_summary(self):
