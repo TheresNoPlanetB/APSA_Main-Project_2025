@@ -36,11 +36,9 @@ circuit1.add_transmission_line("Line 5", "Bus 5", "Bus 6", bundle1, geometry1, 1
 circuit1.add_transmission_line("Line 6", "Bus 4", "Bus 5", bundle1, geometry1, 35)
 
 # Add Load
-#circuit1.add_load("Load 2", "Bus 2", 100, 70)
 circuit1.add_load("Load 3", "Bus 3", 110, 50)
 circuit1.add_load("Load 4", "Bus 4", 100, 70)
 circuit1.add_load("Load 5", "Bus 5", 100, 65)
-#circuit1.add_load("Load 6", "Bus 6", 110, 50)
 
 # Add Generator
 circuit1.add_generator("G1", "Bus 1", 100, 1.0)
@@ -52,6 +50,9 @@ print(circuit1.network_summary())
 
 # Compute Ybus matrix
 circuit1.calc_ybus()
+
+# Display 7 Bus Power System Ybus Matrix
+circuit1.print_ybus_table()
 
 # Power Mismatch
 solution = Solution(buses=[], ybus=None, voltages=[])
@@ -74,4 +75,3 @@ jacobian.print_jacobian(J)
 powerflow = PowerFlow(solution=solution, tol = 0.001, max_iter = 50)
 powerflow.calc_newton_raphson()
 solution.print_power_mismatch(*solution.compute_power_mismatch_vector())
-
