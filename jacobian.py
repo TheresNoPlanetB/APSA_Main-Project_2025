@@ -1,97 +1,164 @@
 import numpy as np
+from tabulate import tabulate
 
 class Jacobian:
-    """
-    The Jacobian class calculates the Jacobian matrix for the Newton-Raphson power flow method.
-    It consists of four submatrices: J1 (dP/dδ), J2 (dP/dV), J3 (dQ/dδ), and J4 (dQ/dV).
-    """
 
     def __init__(self, buses, ybus, angles, voltages):
         self.buses = buses
         self.ybus = ybus
         self.angles = angles
         self.voltages = voltages
-        self.J1 = None
-        self.J2 = None
-        self.J3 = None
-        self.J4 = None
-        self.J = None
 
     def calc_jacobian(self):
-        """
-        Calculate the full Jacobian matrix by computing its four submatrices.
-        """
-        self.J1 = self.calc_J1()
-        self.J2 = self.calc_J2()
-        self.J3 = self.calc_J3()
-        self.J4 = self.calc_J4()
-        self.construct_jacobian()
 
-    def calc_J1(self):
-        """
-        Calculate the submatrix J1 (dP/dδ).
-        """
-        # Placeholder for J1 calculation
-        J1 = np.zeros((len(self.buses), len(self.buses)))
-        # Implement the actual calculation here
-        return J1
+        n = len(self.buses)
+        angles = [bus.delta for bus in self.buses]
+        V = self.voltages
 
-    def calc_J2(self):
-        """
-        Calculate the submatrix J2 (dP/dV).
-        """
-        # J2 calculation
-        J2 = np.zeros((len(self.buses), len(self.buses)))
-        # Implement the actual calculation here
-        return J2
+        J11 = np.zeros((n, n))  # ∂P/∂δ
+        J12 = np.zeros((n, n))  # ∂P/∂V
+        J21 = np.zeros((n, n))  # ∂Q/∂δ
+        J22 = np.zeros((n, n))  # ∂Q/∂V
 
-    def calc_J3(self):
-        """
-        Calculate the submatrix J3 (dQ/dδ).
-        """
-        #  J3 calculation
-        J3 = np.zeros((len(self.buses), len(self.buses)))
-        # Implement the actual calculation here
-        return J3
+        for i, bus_i in enumerate(self.buses):
+            if bus_i.bus_type == "Slack Bus":
+                continue
 
-    def calc_J4(self):
-        """
-        Calculate the submatrix J4 (dQ/dV).
-        """
-        # J4 calculation
-        J4 = np.zeros((len(self.buses), len(self.buses)))
-        # Implement the actual calculation here
+            V_i = V[i]
+            delta_i = np.radians(angles[i])
 
+            for j, bus_j in enumerate(self.buses):
+                V_j = V[j]
+                delta_j = np.radians(angles[j])
+                Y_ij = self.ybus[i, j]
+                G_ij = Y_ij.real
+                B_ij = Y_ij.imag
 
-        return J4
+                theta_ij = delta_i - delta_j
 
-    def construct_jacobian(self):
-        """
-        Construct the full Jacobian matrix from its submatrices.
-        """
-        # Combine J1, J2, J3, J4 into the full Jacobian matrix J
-        self.J = np.block([[self.J1, self.J2], [self.J3, self.J4]])
+                if i == j:
+                    for k, bus_k in enumerate(self.buses):
+                        if k == i:
+                            continue
+                        V_k = V[k]
+                        delta_k = np.radians(angles[k])
+                        Y_ik = self.ybus[i, k]
+                        G_ik = Y_ik.real
+                        B_ik = Y_ik.imag
 
-    def get_jacobian(self):
-        """
-        Return the full Jacobian matrix.
-        """
-        if self.J is None:
-            self.calc_jacobian()
-        return self.J
+                        theta_ik = delta_i - delta_k
 
-# Example usage
+                        J11[i, i] += V_i * V_k * (G_ik * np.sin(theta_ik) - B_ik * np.cos(theta_ik))
+                        J12[i, i] += V_k * (G_ik * np.cos(theta_ik) + B_ik * np.sin(theta_ik))
+                        J21[i, i] += -V_i * V_k * (G_ik * np.cos(theta_ik) + B_ik * np.sin(theta_ik))
+                        J22[i, i] += V_k * (G_ik * np.sin(theta_ik) - B_ik * np.cos(theta_ik))
+
+                    J11[i, i] *= -1
+                    J12[i, i] += 2 * V_i * self.ybus[i, i].real
+                    J21[i, i] *= -1
+                    J22[i, i] -= 2 * V_i * self.ybus[i, i].imag
+
+                else:
+                    J11[i, j] = -V_i * V_j * (-G_ij * np.sin(theta_ij) + B_ij * np.cos(theta_ij))
+                    J12[i, j] = V_i * (G_ij * np.cos(theta_ij) + B_ij * np.sin(theta_ij))
+                    J21[i, j] = -V_i * V_j * (G_ij * np.cos(theta_ij) + B_ij * np.sin(theta_ij))
+                    J22[i, j] = V_i * (G_ij * np.sin(theta_ij) - B_ij * np.cos(theta_ij))
+
+        # Filter buses: exclude slack from both rows/columns. PV exclude from Q rows/cols
+        pq_pv_indices = [i for i, bus in enumerate(self.buses) if bus.bus_type in ("PQ Bus", "PV Bus")]
+        pq_indices = [i for i, bus in enumerate(self.buses) if bus.bus_type == "PQ Bus"]
+
+        J11_red = J11[np.ix_(pq_pv_indices, pq_pv_indices)]
+        J12_red = J12[np.ix_(pq_pv_indices, pq_indices)]
+        J21_red = J21[np.ix_(pq_indices, pq_pv_indices)]
+        J22_red = J22[np.ix_(pq_indices, pq_indices)]
+
+        # Combine the submatrices into full Jacobian
+        J_top = np.hstack((J11_red, J12_red))
+        J_bottom = np.hstack((J21_red, J22_red))
+        J_full = np.vstack((J_top, J_bottom))
+
+        return J_full
+
+    def print_jacobian(self, J):
+        num_rows, num_cols = J.shape
+        row_labels = [f"Row {i + 1}" for i in range(num_rows)]
+        col_labels = [f"Column {i + 1}" for i in range(num_cols)]
+
+        # Combine labels and matrix into tabular data
+        data_with_labels = [
+            [row_labels[i]] + list(np.round(J[i], 4)) for i in range(num_rows)
+        ]
+
+        # Print formatted table
+        print("\nJacobian Matrix:")
+        print(tabulate(data_with_labels, headers=[""] + col_labels, tablefmt="grid"))
+
 if __name__ == '__main__':
-    # Example data
-    ybus = np.array([[1 + 2j, 3 + 4j, 5 + 6j], [7 + 8j, 9 + 10j, 11 + 12j], [13 + 14j, 15 + 16j, 17 + 18j]])
-    angles = np.array([0, 0.1, 0.2])
-    voltages = np.array([1.0, 1.02, 1.01])
-    buses = ['Bus 1', 'Bus 2', 'Bus 3']
+    from solution import Solution
+    from circuit import Circuit
+    from conductor import Conductor
+    from bundle import Bundle
+    from geometry import Geometry
 
-    # Create Jacobian instance
-    jacobian = Jacobian(buses, ybus, angles, voltages)
 
-    # Calculate and retrieve the Jacobian matrix
-    J = jacobian.get_jacobian()
-    print("Jacobian Matrix:")
-    print(J)
+    # Create circuit
+    circuit1 = Circuit("Circuit")
+
+    # Add Buses
+    circuit1.add_bus("Bus 1", 20, "Slack Bus")
+    circuit1.add_bus("Bus 2", 230, "PQ Bus")
+    circuit1.add_bus("Bus 3", 230, "PQ Bus")
+    circuit1.add_bus("Bus 4", 230, "PQ Bus")
+    circuit1.add_bus("Bus 5", 230, "PQ Bus")
+    circuit1.add_bus("Bus 6", 230, "PQ Bus")
+    circuit1.add_bus("Bus 7", 18, "PV Bus")
+
+    # Add Transformers
+    circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100)
+    circuit1.add_transformer("T2", "Bus 6", "Bus 7", 200, 10.5, 12, 100)
+
+    # Add Transmission Line Parameters
+    conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
+    bundle1 = Bundle("Bundle A", 2, 1.5, conductor1)
+    geometry1 = Geometry("Geometry 1", 0, 0, 19.5, 0, 39, 0)
+
+    # Add Transmission Lines
+    circuit1.add_transmission_line("Line 1", "Bus 2", "Bus 4", bundle1, geometry1, 10)
+    circuit1.add_transmission_line("Line 2", "Bus 2", "Bus 3", bundle1, geometry1, 25)
+    circuit1.add_transmission_line("Line 3", "Bus 3", "Bus 5", bundle1, geometry1, 20)
+    circuit1.add_transmission_line("Line 4", "Bus 4", "Bus 6", bundle1, geometry1, 20)
+    circuit1.add_transmission_line("Line 5", "Bus 5", "Bus 6", bundle1, geometry1, 10)
+    circuit1.add_transmission_line("Line 6", "Bus 4", "Bus 5", bundle1, geometry1, 35)
+
+    # Add Load
+    circuit1.add_load("Load 3", "Bus 3", 110, 50)
+    circuit1.add_load("Load 4", "Bus 4", 100, 70)
+    circuit1.add_load("Load 5", "Bus 5", 100, 65)
+
+    # Add Generator
+    circuit1.add_generator("G1", "Bus 1", 1.0, 100)
+    circuit1.add_generator("G2", "Bus 7", 1.0, 200)
+
+    # Create and initialize solution
+    solution = Solution(buses=[], ybus=None, voltages=[])
+    solution.initialize_system(circuit1)
+
+    # Get Buses and Ybus from the solution class
+    buses = solution.buses
+    ybus = solution.ybus
+
+    # Power World Data
+    angles = [bus.delta for bus in buses]
+    voltages = [bus.vpu for bus in buses]
+
+    # Create and compute Jacobian
+    jacobian = Jacobian(buses=buses, ybus=ybus, angles = angles, voltages = voltages)
+    J = jacobian.calc_jacobian()
+
+    # Print Jacobian Matrix
+    # After calculating the Jacobian matrix
+    np.set_printoptions(precision=4, suppress=True)
+    J = jacobian.calc_jacobian()
+
+    jacobian.print_jacobian(J)
