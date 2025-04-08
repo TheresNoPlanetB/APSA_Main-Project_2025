@@ -74,4 +74,4 @@ jacobian.print_jacobian(J)
 # Newton Raphson Power Flow
 powerflow = PowerFlow(solution=solution, tol = 0.001, max_iter = 5)
 powerflow.calc_newton_raphson()
-solution.print_power_mismatch(*solution.compute_power_mismatch_vector())
+#solution.print_power_mismatch(*solution.compute_power_mismatch_vector())

@@ -4,7 +4,7 @@ from jacobian import Jacobian
 
 class PowerFlow:
 
-    def __init__(self, solution: Solution, tol = 0.001, max_iter = 50):
+    def __init__(self, solution: Solution, tol = 0.001, max_iter = 5):
         self.solution = solution
         self.buses = solution.buses
         self.ybus = solution.ybus
@@ -24,11 +24,11 @@ class PowerFlow:
 
             mismatch_vector = np.concatenate((delta_P_vector, delta_Q_vector))
 
-            # Power Mismatch Structure
+            # Print Power Mismatch Structure
             print(f"\nIteration {iteration}")
-            print("Power Mismatch Shape", mismatch_vector.shape)
-            print("Mismatch Vector (ΔP and ΔQ):")
-            print(np.round(mismatch_vector, 4))
+            #print("Power Mismatch Shape", mismatch_vector.shape)
+            #print("Mismatch Vector (ΔP and ΔQ):")
+            #print(np.round(mismatch_vector, 4))
 
             if np.all(np.abs(mismatch_vector) < self.tol):
                 print(f"\nConverged in {iteration} iterations")
@@ -39,12 +39,14 @@ class PowerFlow:
             jacobian = Jacobian(buses = self.buses, ybus = self.ybus, angles = angles, voltages = voltages)
             J = jacobian.calc_jacobian()
 
-            # Jacobian Matrix
-            print("Jacobian Matrix Shape", J.shape)
-            print("Jacobian Matrix")
-            print(np.round(J[:11, :11], 4))  # or use tabulate if needed
+            # Print Jacobian Matrix
+            #print("Jacobian Matrix Shape", J.shape)
+            #print("Jacobian Matrix")
+            #print(np.round(J[:11, :11], 4))  # or use tabulate if needed
 
             delta_x = np.linalg.solve(J, mismatch_vector)
+
+            print(delta_x)
 
             idx = 0
 
@@ -57,6 +59,10 @@ class PowerFlow:
                     bus.vpu += delta_x[idx]
                     bus.vpu = max(0.9, min(bus.vpu, 1.1))
                     idx += 1
+
+            # Print Angles and Voltages (p.u.) per iteration
+            #print(angles)
+            #print(voltages)
 
             self.solution.voltages = [bus.vpu for bus in self.buses]
 
