@@ -19,33 +19,10 @@ class Solution:
         # Set voltage and angle for all buses
         # Example hard-coded values
 
-        initial_voltages = {
-            "Bus 1": 1.00000,
-            "Bus 2": 0.93692,
-            "Bus 3": 0.92049,
-            "Bus 4": 0.92980,
-            "Bus 5": 0.92672,
-            "Bus 6": 0.93968,
-            "Bus 7": 0.99999
-        }
-
-        initial_angles = {
-            "Bus 1": 0.00,
-            "Bus 2": -4.44,
-            "Bus 3": -5.46,
-            "Bus 4": -4.70,
-            "Bus 5": -4.83,
-            "Bus 6": -3.95,
-            "Bus 7": 2.15
-        }
-
-        # Assign angles
+        # Set voltage and angle for all buses
         for bus in circuit.buses.values():
-            bus.delta = initial_angles.get(bus.name, 0.0) # Voltage angle (degrees)
-
-        # Assign voltages
-        for bus in circuit.buses.values():
-            bus.vpu = initial_voltages.get(bus.name, 1.0) # Voltage magnitude
+            bus.vpu = 1.0
+            bus.delta = 0.0
 
         # Set load powers (as negative injections)
         for load in circuit.loads.values():
@@ -73,8 +50,8 @@ class Solution:
         V_k = self.voltages[bus_k_index]  # Voltage magnitude at bus k
         delta_k = np.radians(angles[bus_k_index])  # Voltage angle at bus k (in radians)
 
-        print(f"\n--- Calculating Power Injection for Bus {bus_k_index + 1} ---")
-        print(f"V_k = {V_k:.2f}, δ_k (rad) = {delta_k:.2f}")
+        #print(f"\n--- Calculating Power Injection for Bus {bus_k_index + 1} ---")
+        #print(f"V_k = {V_k:.2f}, δ_k (rad) = {delta_k:.2f}")
 
         for n in range(len(self.voltages)):
             V_n = self.voltages[n]
@@ -94,14 +71,14 @@ class Solution:
             Q_k += term_Q
 
             # Print term details
-            print(f"\nTerm {n + 1}:")
-            print(f"  V_n = {V_n:.2f}, δ_n (rad) = {delta_n:.2f}")
-            print(f"  |Y_kn| = {Y_mag:.2f}, ∠Y_kn = {Y_angle:.2f} rad")
-            print(f"  θ_diff = {angle_diff:.2f}")
-            print(f"  P_term = {term_P:.2f}, Q_term = {term_Q:.2f}")
+            #print(f"\nTerm {n + 1}:")
+            #print(f"  V_n = {V_n:.2f}, δ_n (rad) = {delta_n:.2f}")
+            #print(f"  |Y_kn| = {Y_mag:.2f}, ∠Y_kn = {Y_angle:.2f} rad")
+            #print(f"  θ_diff = {angle_diff:.2f}")
+            #print(f"  P_term = {term_P:.2f}, Q_term = {term_Q:.2f}")
 
-        print(f"\nTotal P_inj = {P_k:.2f} p.u. ({P_k * 100:.2f} MW)")
-        print(f"Total Q_inj = {Q_k:.2f} p.u. ({Q_k * 100:.2f} MVAR)")
+        #print(f"\nTotal P_inj = {P_k:.2f} p.u. ({P_k * 100:.2f} MW)")
+        #print(f"Total Q_inj = {Q_k:.2f} p.u. ({Q_k * 100:.2f} MVAR)")
 
         return P_k, Q_k
 
@@ -114,7 +91,7 @@ class Solution:
         delta_Q = []
         angles = [bus.delta for bus in self.buses]  # degrees
 
-        print("\n--- Detailed Power Mismatch Calculations ---")
+        #print("\n--- Power Mismatch Calculations ---")
 
         for bus in self.buses:
             if bus.bus_type == "Slack Bus":
@@ -134,9 +111,9 @@ class Solution:
             delta_Q.append(dQ)
 
             # Print detailed info
-            print(f"\nBus {bus.name} ({bus.bus_type}):")
-            print(f"  P_spec = {bus.P_spec * 100:.2f} MW,  P_calc = {P_calc * 100:.2f} MW → ΔP = {dP:.4f} MW")
-            print(f"  Q_spec = {bus.Q_spec * 100:.2f} MVAR, Q_calc = {Q_calc * 100:.2f} MVAR → ΔQ = {dQ:.4f} MVAR")
+            #print(f"\nBus {bus.name} ({bus.bus_type}):")
+            #print(f"  P_spec = {bus.P_spec * 100:.2f} MW,  P_calc = {P_calc * 100:.2f} MW → ΔP = {dP:.4f} MW")
+            #print(f"  Q_spec = {bus.Q_spec * 100:.2f} MVAR, Q_calc = {Q_calc * 100:.2f} MVAR → ΔQ = {dQ:.4f} MVAR")
 
         return np.array(delta_P), np.array(delta_Q)
 
