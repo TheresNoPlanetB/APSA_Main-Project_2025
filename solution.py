@@ -9,28 +9,52 @@ class Solution:
         :param voltages: voltage vector
         """
         self.buses = buses # System admittance matrix
-        self.ybus = ybus # List of Bus objects
-        self.voltages = voltages # Voltage of
-        self.pu_list = [1.00000, 0.93692,  0.92049,  0.92980,  0.92673,  0.93968,  1.00000]
-        self.delta_list = [0.00, -4.45, -5.47, -4.70, -4.84, -3.95, 2.15]
+        self.ybus = ybus # List of bus objects
+        self.voltages = voltages # List of voltage magnitudes (per uint) for all buses
 
     def initialize_system(self, circuit):
         """
         Initializes bus voltages, loads, generators, and calculates Ybus.
         """
         # Set voltage and angle for all buses
-        for i in range(0, len(self.buses)):
-            self.buses[i].vpu = self.pu_list[i]
-            self.buses[i].delta = self.delta_list[i]
+        # Example hard-coded values
+
+        initial_voltages = {
+            "Bus 1": 1.00000,
+            "Bus 2": 0.93692,
+            "Bus 3": 0.92049,
+            "Bus 4": 0.92980,
+            "Bus 5": 0.92672,
+            "Bus 6": 0.93968,
+            "Bus 7": 0.99999
+        }
+
+        initial_angles = {
+            "Bus 1": 0.00,
+            "Bus 2": -4.44,
+            "Bus 3": -5.46,
+            "Bus 4": -4.70,
+            "Bus 5": -4.83,
+            "Bus 6": -3.95,
+            "Bus 7": 2.15
+        }
+
+        # Assign angles
+        for bus in circuit.buses.values():
+            bus.delta = initial_angles.get(bus.name, 0.0) # Voltage angle (degrees)
+
+        # Assign voltages
+        for bus in circuit.buses.values():
+            bus.vpu = initial_voltages.get(bus.name, 1.0) # Voltage magnitude
 
         # Set load powers (as negative injections)
         for load in circuit.loads.values():
-            load.bus.P_spec -= load.real_power / 100
-            load.bus.Q_spec -= load.reactive_power / 100
+            load.bus.P_spec -= load.real_power / 100 # Converted from MW to p.u. by dividing by 100
+            load.bus.Q_spec -= load.reactive_power / 100 # Converted from MVAR to p.u. by dividing by 100
 
         # Set generator real power contributions
         for gen in circuit.generators.values():
-            gen.bus.P_spec += gen.mw_setpoint / 100
+            gen.bus.P_spec += gen.mw_setpoint / 100 # Converted from MW to p.u. by dividing by 100
 
         # Calculate Ybus and update internal state
         circuit.calc_ybus()
@@ -44,25 +68,40 @@ class Solution:
         bus_k_index: index of the bus you're calculating power injection for (k)
         angles: list of voltage angles (in degrees) for all buses
         """
-        P_k = 0 # Initialize real power injection
-        Q_k = 0 # Initialize reactive power injection
-        V_k = self.voltages[bus_k_index] # Gets voltage at bus k
-        delta_k = np.radians(angles[bus_k_index]) # Gets angle at bus k and converts to radians
+        P_k = 0  # Total real power injection at bus k
+        Q_k = 0  # Total reactive power injection at bus k
+        V_k = self.voltages[bus_k_index]  # Voltage magnitude at bus k
+        delta_k = np.radians(angles[bus_k_index])  # Voltage angle at bus k (in radians)
 
-        # Loops through every bus "n" to compute bus k
+        print(f"\n--- Calculating Power Injection for Bus {bus_k_index + 1} ---")
+        print(f"V_k = {V_k:.2f}, δ_k (rad) = {delta_k:.2f}")
+
         for n in range(len(self.voltages)):
             V_n = self.voltages[n]
             delta_n = np.radians(angles[n])
             Y_kn = self.ybus[bus_k_index, n]
-            Y_mag = np.abs(Y_kn) # Magnitude of Y_kn
-            Y_angle = np.angle(Y_kn) # Angle of Y_kn in radians
+            Y_mag = np.abs(Y_kn)
+            Y_angle = np.angle(Y_kn)
 
-            # Compute difference angle in power injection equation
             angle_diff = delta_k - delta_n - Y_angle
 
-            # Update the power injection sum
-            P_k += V_k * V_n * Y_mag * np.cos(angle_diff)
-            Q_k += V_k * V_n * Y_mag * np.sin(angle_diff)
+            # Calculate each term in the power summation
+            term_P = V_k * V_n * Y_mag * np.cos(angle_diff)
+            term_Q = V_k * V_n * Y_mag * np.sin(angle_diff)
+
+            # Accumulate total power injections
+            P_k += term_P
+            Q_k += term_Q
+
+            # Print term details
+            print(f"\nTerm {n + 1}:")
+            print(f"  V_n = {V_n:.2f}, δ_n (rad) = {delta_n:.2f}")
+            print(f"  |Y_kn| = {Y_mag:.2f}, ∠Y_kn = {Y_angle:.2f} rad")
+            print(f"  θ_diff = {angle_diff:.2f}")
+            print(f"  P_term = {term_P:.2f}, Q_term = {term_Q:.2f}")
+
+        print(f"\nTotal P_inj = {P_k:.2f} p.u. ({P_k * 100:.2f} MW)")
+        print(f"Total Q_inj = {Q_k:.2f} p.u. ({Q_k * 100:.2f} MVAR)")
 
         return P_k, Q_k
 
@@ -75,17 +114,29 @@ class Solution:
         delta_Q = []
         angles = [bus.delta for bus in self.buses]  # degrees
 
-        # Iterate through all buses via the mismatch method
+        print("\n--- Detailed Power Mismatch Calculations ---")
+
         for bus in self.buses:
             if bus.bus_type == "Slack Bus":
                 delta_P.append(0)
                 delta_Q.append(0)
-                continue  # Slack buses do not contribute to mismatch
+                continue  # Skip slack bus
 
-            # Calculate injected power at this bus
+            # Compute injected power
             P_calc, Q_calc = self.compute_power_injection(bus.index, angles)
-            delta_P.append((bus.P_spec - P_calc) * 100)
-            delta_Q.append((bus.Q_spec - Q_calc) * 100 if bus.bus_type == "PQ Bus" else 0)
+
+            # Compute mismatch (multiply by 100 to convert from p.u. to MW/MVAR)
+            dP = (bus.P_spec - P_calc) * 100
+            dQ = (bus.Q_spec - Q_calc) * 100 if bus.bus_type == "PQ Bus" else 0
+
+            # Append to vectors
+            delta_P.append(dP)
+            delta_Q.append(dQ)
+
+            # Print detailed info
+            print(f"\nBus {bus.name} ({bus.bus_type}):")
+            print(f"  P_spec = {bus.P_spec * 100:.2f} MW,  P_calc = {P_calc * 100:.2f} MW → ΔP = {dP:.4f} MW")
+            print(f"  Q_spec = {bus.Q_spec * 100:.2f} MVAR, Q_calc = {Q_calc * 100:.2f} MVAR → ΔQ = {dQ:.4f} MVAR")
 
         return np.array(delta_P), np.array(delta_Q)
 
@@ -138,7 +189,7 @@ if __name__ == "__main__":
     circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
     # Add Generator
-    circuit1.add_generator("G1", "Bus 1", 1.0, 100)
+    circuit1.add_generator("G1", "Bus 1", 1.0, 113.56)
     circuit1.add_generator("G2", "Bus 7", 1.0, 200)
     ### Add rated voltage to generator class
 
