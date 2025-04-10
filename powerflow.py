@@ -1,11 +1,12 @@
 import numpy as np
+from tabulate import tabulate
 from solution import Solution
 from jacobian import Jacobian
 
 class PowerFlow:
 
     # Initializes th
-    def __init__(self, solution: Solution, tol = 0.001, max_iter = 5):
+    def __init__(self, solution: Solution, tol, max_iter):
         self.solution = solution
         self.buses = solution.buses
         self.ybus = solution.ybus
@@ -43,20 +44,21 @@ class PowerFlow:
             J = jacobian.calc_jacobian()
 
             # Solves delta(x) = (J^-1) * mismatch_vector
-            print(mismatch_vector)
+            self.print_vector(mismatch_vector, "Mismatch Vector [ΔP | ΔQ]")
+            self.print_matrix(J, "Jacobian Matrix J")
             delta_x = np.linalg.solve(J, mismatch_vector)
+            #self.print_vector(delta_x, "Update Vector Δx")
+
+            # Split update vectors
             delta_delta = delta_x[0:len(pv_pq_indices)]
             delta_v = delta_x[len(pv_pq_indices):]
-            print(J)
-            print(mismatch_vector)
-            print(delta_x)
 
             # Iterates through buses to update voltage pu and angle
             idx = 0
             for i, bus in enumerate(self.buses):
                 if bus.bus_type == "Slack Bus":
                     continue
-                bus.delta += delta_delta[idx]
+                bus.delta += np.degrees(delta_delta[idx])
                 idx += 1
 
             idx = 0
@@ -79,3 +81,14 @@ class PowerFlow:
 
         print("\nDid not converge within the max number of iterations")
         return False
+
+    def print_matrix(self, matrix, title="Matrix"):
+        print(f"\n--- {title} ---")
+        headers = [f"Col {i+1}" for i in range(matrix.shape[1])]
+        table = [[f"Row {i+1}"] + list(np.round(row, 5)) for i, row in enumerate(matrix)]
+        print(tabulate(table, headers=[""] + headers, tablefmt="grid"))
+
+    def print_vector(self, vector, title="Vector"):
+        print(f"\n--- {title} ---")
+        table = [[f"Idx {i+1}", round(val, 5)] for i, val in enumerate(vector)]
+        print(tabulate(table, headers=["Index", "Value"], tablefmt="grid"))
