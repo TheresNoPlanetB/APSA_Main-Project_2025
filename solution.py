@@ -103,8 +103,8 @@ class Solution:
             P_calc, Q_calc = self.compute_power_injection(bus.index, angles)
 
             # Compute mismatch (multiply by 100 to convert from p.u. to MW/MVAR)
-            dP = (bus.P_spec - P_calc) * 100
-            dQ = (bus.Q_spec - Q_calc) * 100 if bus.bus_type == "PQ Bus" else 0
+            dP = (bus.P_spec - P_calc)
+            dQ = (bus.Q_spec - Q_calc) if bus.bus_type == "PQ Bus" else 0
 
             # Append to vectors
             delta_P.append(dP)
@@ -121,8 +121,8 @@ class Solution:
         print("\n--- Power Mismatch ---")
         for i, bus in enumerate(self.buses):
             print(f"{bus.name} ({bus.bus_type}):")
-            print(f"  MW:   {delta_P[i]: .3f}")
-            print(f"  MVAR: {delta_Q[i]: .3f}")
+            print(f"  MW:   {delta_P[i]: .5f}")
+            print(f"  MVAR: {delta_Q[i]: .5f}")
 
 if __name__ == "__main__":
 
@@ -180,5 +180,5 @@ if __name__ == "__main__":
     print("\n--- Power Mismatch ---")
     for i, bus in enumerate(solution.buses):
         print(f"{bus.name} ({bus.bus_type}):")
-        print(f"  MW:   {delta_P[i]: .3f}")
-        print(f"  MVAR: {delta_Q[i]: .3f}")
+        print(f"  MW:   {delta_P[i]: .5f}")
+        print(f"  MVAR: {delta_Q[i]: .5f}")
