@@ -41,9 +41,8 @@ circuit1.add_load("Load 4", "Bus 4", 100, 70)
 circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
 # Add Generator
-circuit1.add_generator("G1", "Bus 1", 100, 1.0)
-circuit1.add_generator("G2", "Bus 7", 200, 1.0)
-
+circuit1.add_generator("G1", "Bus 1", 1.0, 100)
+circuit1.add_generator("G2", "Bus 7", 1.0, 200)
 
 # Print network summary
 print(circuit1.network_summary())
