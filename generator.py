@@ -1,3 +1,5 @@
+from http.cookiejar import reach
+
 from bus import Bus
 
 class Generator:
@@ -7,11 +9,13 @@ class Generator:
     It has attributes name, bus, voltage_setpoint, mw_setpoint.
     """
 
-    def __init__(self, name: str, bus: Bus, voltage_setpoint: float, mw_setpoint: float):
+    def __init__(self, name: str, bus: Bus, voltage_setpoint: float, mw_setpoint: float, reactance: float):
         self.name = name
         self.bus = bus
         self.voltage_setpoint = voltage_setpoint
         self.mw_setpoint = mw_setpoint
+        self.reactance = reactance
+        self.admittance = 1/self.reactance
 
 if __name__ == '__main__':
     from bus import Bus

@@ -41,17 +41,48 @@ circuit1.add_load("Load 4", "Bus 4", 100, 70)
 circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
 # Add Generator
-circuit1.add_generator("G1", "Bus 1", 1.0, 100)
-circuit1.add_generator("G2", "Bus 7", 1.0, 200)
+circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12)
+circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12)
 
 # Print network summary
 print(circuit1.network_summary())
 
-# Compute Ybus matrix
-circuit1.calc_ybus()
+# Compute Ybus matrix for power flow
+circuit1.calc_ybus_powerflow()
 
-# Display 7 Bus Power System Ybus Matrix
-circuit1.print_ybus_table()
+# Compute Ybus matrix for fault study
+circuit1.calc_ybus_faultstudy()
+
+# Compute Zbus matrix for fault study
+circuit1.calc_zbus()
+
+# Compute fault current
+circuit1.calc_fault_current("Bus 1")
+
+# Compute fault voltage
+circuit1.calc_fault_bus_voltage("Bus 1", "Bus 2")
+
+# Display 7 Bus Power System Ybus Power Flow Matrix
+print("PowerFlow Y bus")
+circuit1.print_ybus_powerflow_table()
+
+# Display 7 Bus Power System Ybus Fault Study Matrix
+print("FaultStudy Y bus")
+circuit1.print_ybus_faultstudy_table()
+
+# Display 7 Bus Power System Zbus
+print("FaultStudy Y bus")
+circuit1.print_zbus_table()
+
+# Display 7 Bus Power System Zbus
+print("Fault Current")
+circuit1.print_fault_current("Bus 1")
+
+# Display 7 Bus Power System Zbus
+print("Fault Bus Voltage")
+circuit1.print_fault_bus_voltage("Bus 1", "Bus 2")
+
+
 
 # Power Mismatch
 solution = Solution(buses=[], ybus=None, voltages=[])

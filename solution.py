@@ -34,9 +34,9 @@ class Solution:
             gen.bus.P_spec += gen.mw_setpoint / 100 # Converted from MW to p.u. by dividing by 100
 
         # Calculate Ybus and update internal state
-        circuit.calc_ybus()
+        circuit.calc_ybus_powerflow()
         self.buses = list(circuit.buses.values())
-        self.ybus = circuit.get_ybus()
+        self.ybus = circuit.get_ybus_powerflow()
         self.voltages = [bus.vpu for bus in self.buses]
 
     def compute_power_injection(self, bus_k_index, angles):

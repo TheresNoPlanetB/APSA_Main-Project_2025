@@ -1,4 +1,5 @@
 from bus import Bus
+from main import buses
 from transformer import Transformer
 from transmissionline import TransmissionLine
 from generator import Generator
@@ -18,7 +19,15 @@ class Circuit:
         self.transmission_lines = {} # Dictionary of T-Line objects
         self.generators = {} # Dictionary of generators
         self.loads = {} # Dictionary of loads
-        self.ybus = None # Ybus matrix placeholder
+        self.ybus_powerflow = None # Ybus matrix placeholder
+        self.ybus_faultstudy = None # Ybus matrix placeholder
+        self.zbus = None
+        self.fault_current = None
+        self.fault_currents = []
+        self.fault_bus_v = None
+        self.fault_bus_vs = []
+        self.V_f = 1.0
+
 
     def add_bus(self, name, base_kv, bus_type):
         # Adding bus into circuit
@@ -42,12 +51,12 @@ class Circuit:
             raise ValueError("Both buses must be added to the circuit before adding a transmission line.")
         self.transmission_lines[name] = TransmissionLine(name, self.buses[bus1], self.buses[bus2], bundle, geometry, length)
 
-    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint):
+    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint, reactance):
         if name in self.generators:
             raise ValueError(f"Generator {name} already exists in the circuit.")
         if bus_name not in self.buses:
             raise ValueError(f"Bus {bus_name} must be added before attaching a generator.")
-        self.generators[name] = Generator(name, self.buses[bus_name], voltage_setpoint, mw_setpoint)
+        self.generators[name] = Generator(name, self.buses[bus_name], voltage_setpoint, mw_setpoint, reactance)
 
     def add_load(self, name, bus_name, real_power, reactive_power):
         if name in self.loads:
@@ -56,7 +65,7 @@ class Circuit:
             raise ValueError(f"Bus {bus_name} must be added before attaching a load.")
         self.loads[name] = Load(name, self.buses[bus_name], real_power, reactive_power)
 
-    def calc_ybus(self):
+    def calc_ybus_powerflow(self):
         # Ybus matrix by summing the primitive admittance matrices.
 
         # Initialize Ybus matrix (N x N zero matrix)
@@ -64,7 +73,7 @@ class Circuit:
         if N == 0:
             raise ValueError("No buses in the circuit to compute Ybus.")
 
-        self.ybus = np.zeros((N, N), dtype=complex)  # Initialize as complex numbers
+        self.ybus_powerflow = np.zeros((N, N), dtype=complex)  # Initialize as complex numbers
 
         # Bus names to indices for Ybus
         bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
@@ -76,12 +85,12 @@ class Circuit:
             Yprim = transformer.yprim  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
-            self.ybus[idx1, idx1] += Yprim[0, 0]
-            self.ybus[idx2, idx2] += Yprim[1, 1]
+            self.ybus_powerflow[idx1, idx1] += Yprim[0, 0]
+            self.ybus_powerflow[idx2, idx2] += Yprim[1, 1]
 
             # Add mutual admittance (off-diagonal elements, negative values)
-            self.ybus[idx1, idx2] += Yprim[0, 1]
-            self.ybus[idx2, idx1] += Yprim[1, 0]
+            self.ybus_powerflow[idx1, idx2] += Yprim[0, 1]
+            self.ybus_powerflow[idx2, idx1] += Yprim[1, 0]
 
         for tline in self.transmission_lines.values():
             bus1, bus2 = tline.bus1.name, tline.bus2.name
@@ -89,34 +98,145 @@ class Circuit:
             Yprim = tline.yprim_pu  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
-            self.ybus[idx1, idx1] += Yprim[0, 0]
-            self.ybus[idx2, idx2] += Yprim[1, 1]
+            self.ybus_powerflow[idx1, idx1] += Yprim[0, 0]
+            self.ybus_powerflow[idx2, idx2] += Yprim[1, 1]
 
             # Add mutual admittance (off-diagonal elements, negative values)
-            self.ybus[idx1, idx2] += Yprim[0, 1]
-            self.ybus[idx2, idx1] += Yprim[1, 0]
+            self.ybus_powerflow[idx1, idx2] += Yprim[0, 1]
+            self.ybus_powerflow[idx2, idx1] += Yprim[1, 0]
 
         # Numerical stability
-        if np.any(np.diag(self.ybus) == 0):
+        if np.any(np.diag(self.ybus_powerflow) == 0):
             raise ValueError("Singular Ybus detected. Ensure all buses have self-admittance.")
 
-    def get_ybus(self):
+    def calc_ybus_faultstudy(self):
+        # Ybus matrix by summing the primitive admittance matrices.
+
+        # Initialize Ybus matrix (N x N zero matrix)
+        N = len(self.buses)
+        if N == 0:
+            raise ValueError("No buses in the circuit to compute Ybus.")
+
+        self.ybus_faultstudy = np.zeros((N, N), dtype=complex)  # Initialize as complex numbers
+
+        # Bus names to indices for Ybus
+        bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
+
+        # Retrieve info from transformer and transmission line
+        for transformer in self.transformer.values():
+            bus1, bus2 = transformer.bus1.name, transformer.bus2.name
+            idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
+            Yprim = transformer.yprim  # Get primitive admittance matrix
+
+            # Add self-admittance (diagonal elements)
+            self.ybus_faultstudy[idx1, idx1] += Yprim[0, 0]
+            self.ybus_faultstudy[idx2, idx2] += Yprim[1, 1]
+
+            # Add mutual admittance (off-diagonal elements, negative values)
+            self.ybus_faultstudy[idx1, idx2] += Yprim[0, 1]
+            self.ybus_faultstudy[idx2, idx1] += Yprim[1, 0]
+
+        for tline in self.transmission_lines.values():
+            bus1, bus2 = tline.bus1.name, tline.bus2.name
+            idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
+            Yprim = tline.yprim_pu  # Get primitive admittance matrix
+
+            # Add self-admittance (diagonal elements)
+            self.ybus_faultstudy[idx1, idx1] += Yprim[0, 0]
+            self.ybus_faultstudy[idx2, idx2] += Yprim[1, 1]
+
+            # Add mutual admittance (off-diagonal elements, negative values)
+            self.ybus_faultstudy[idx1, idx2] += Yprim[0, 1]
+            self.ybus_faultstudy[idx2, idx1] += Yprim[1, 0]
+
+        for generator in self.generators.values():
+            bus = generator.bus.name
+            idx = bus_indices[bus]
+            reactance = complex(generator.reactance)
+            admittance = 1/reactance
+
+            self.ybus_faultstudy[idx, idx] += reactance
+            self.ybus_faultstudy[idx, idx] += admittance
+
+            # Numerical stability
+        if np.any(np.diag(self.ybus_faultstudy) == 0):
+            raise ValueError("Singular Ybus detected. Ensure all buses have self-admittance.")
+
+    def calc_zbus(self):
+        #calculate z bus
+        self.zbus = np.linalg.inv(self.ybus_faultstudy)
+
+    def calc_fault_current(self, faulted_bus):
+        bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
+        #calculate fault current
+        idx = bus_indices[faulted_bus]
+        self.fault_current = self.V_f/self.zbus[idx, idx]
+        #store in an array
+        self.fault_currents[idx] = self.fault_current
+
+    def print_fault_current(self, faulted_bus):
+        print(f"Fault Current at faulted {faulted_bus} is {self.fault_current}")
+
+    def calc_fault_bus_voltage(self, faulted_bus, bus):
+        bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
+        #calculate fault bus voltage
+        idx_fault = bus_indices[faulted_bus]
+        idx_normal = bus_indices[bus]
+        self.fault_bus_v = (1.0 - self.zbus[idx_fault, idx_normal] / self.zbus[idx_fault, idx_fault])*self.V_f
+        #store in an array
+        self.fault_bus_vs[idx_normal] = self.fault_bus_v
+
+    def print_fault_bus_voltage(self, faulted_bus, bus):
+        print(f"Fault bus voltage at {bus} is {self.fault_bus_v}")
+
+
+    def get_ybus_powerflow(self):
         #Returns the computed Ybus matrix.
-        if self.ybus is None:
+        if self.ybus_powerflow is None:
             raise ValueError("Ybus has not been computed. Run calc_ybus() first.")
-        return self.ybus
+        return self.ybus_powerflow
+
+    def get_ybus_faultstudy(self):
+        # Returns the computed Ybus matrix.
+        if self.ybus_faultstudy is None:
+            raise ValueError("Ybus has not been computed. Run calc_ybus() first.")
+        return self.ybus_faultstudy
 
     # Print 7 Bus Power System Ybus Matrix
-    def print_ybus_table(self):
+    def print_ybus_powerflow_table(self):
         # Format matrix elements as "real + imag j"
         formatted_matrix = [
             [f"Bus {i + 1}"] + [f"{elem.real:.2f}{elem.imag:+.2f}j" for elem in row]
-            for i, row in enumerate(self.ybus)
+            for i, row in enumerate(self.ybus_powerflow)
         ]
 
         # Print 7 Bus Power System Ybus Matrix
         print("\nYbus Admittance Matrix:")
-        headers = ["Bus"] + [f"Bus {i + 1}" for i in range(len(self.ybus))]
+        headers = ["Bus"] + [f"Bus {i + 1}" for i in range(len(self.ybus_powerflow))]
+        print(tabulate(formatted_matrix, headers=headers, tablefmt="grid"))
+
+    def print_ybus_faultstudy_table(self):
+        # Format matrix elements as "real + imag j"
+        formatted_matrix = [
+            [f"Bus {i + 1}"] + [f"{elem.real:.2f}{elem.imag:+.2f}j" for elem in row]
+            for i, row in enumerate(self.ybus_faultstudy)
+        ]
+
+        # Print 7 Bus Power System Ybus Matrix
+        print("\nYbus Admittance Matrix:")
+        headers = ["Bus"] + [f"Bus {i + 1}" for i in range(len(self.ybus_faultstudy))]
+        print(tabulate(formatted_matrix, headers=headers, tablefmt="grid"))
+
+    def print_zbus_table(self):
+        # Format matrix elements as "real + imag j"
+        formatted_matrix = [
+            [f"Bus {i + 1}"] + [f"{elem.real:.2f}{elem.imag:+.2f}j" for elem in row]
+            for i, row in enumerate(self.zbus)
+        ]
+
+        # Print 7 Bus Power System Ybus Matrix
+        print("\nYbus Admittance Matrix:")
+        headers = ["Bus"] + [f"Bus {i + 1}" for i in range(len(self.zbus))]
         print(tabulate(formatted_matrix, headers=headers, tablefmt="grid"))
 
     # Print out summary of network
