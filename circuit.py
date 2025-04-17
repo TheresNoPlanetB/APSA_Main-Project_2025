@@ -22,11 +22,11 @@ class Circuit:
         self.ybus_powerflow = None # Ybus matrix placeholder
         self.ybus_faultstudy = None # Ybus matrix placeholder
         self.zbus = None
-        self.fault_current = None
-        self.fault_currents = []
-        self.fault_bus_v = None
-        self.fault_bus_vs = []
-        self.V_f = 1.0
+        self.fault_current = None # Specific current at bus
+        self.fault_currents = [] # List to store fault values
+        self.fault_bus_v = None # Voltage at bus given fault on different bus
+        self.fault_bus_vs = [] # List to store voltage values
+        self.V_f = 1.0 # Pre-fault voltage in p.u.
 
 
     def add_bus(self, name, base_kv, bus_type):
