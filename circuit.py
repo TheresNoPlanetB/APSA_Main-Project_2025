@@ -1,5 +1,5 @@
 from bus import Bus
-from main import buses
+#from main import buses
 from transformer import Transformer
 from transmissionline import TransmissionLine
 from generator import Generator
@@ -172,7 +172,7 @@ class Circuit:
         idx = bus_indices[faulted_bus]
         self.fault_current = self.V_f/self.zbus[idx, idx]
         #store in an array
-        self.fault_currents[idx] = self.fault_current
+        self.fault_currents.append(self.fault_current)
 
     def print_fault_current(self, faulted_bus):
         print(f"Fault Current at faulted {faulted_bus} is {self.fault_current}")
@@ -184,7 +184,7 @@ class Circuit:
         idx_normal = bus_indices[bus]
         self.fault_bus_v = (1.0 - self.zbus[idx_fault, idx_normal] / self.zbus[idx_fault, idx_fault])*self.V_f
         #store in an array
-        self.fault_bus_vs[idx_normal] = self.fault_bus_v
+        self.fault_bus_vs.append(self.fault_bus_v)
 
     def print_fault_bus_voltage(self, faulted_bus, bus):
         print(f"Fault bus voltage at {bus} is {self.fault_bus_v}")

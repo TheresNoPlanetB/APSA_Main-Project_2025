@@ -71,15 +71,13 @@ print("FaultStudy Y bus")
 circuit1.print_ybus_faultstudy_table()
 
 # Display 7 Bus Power System Zbus
-print("FaultStudy Y bus")
+print("FaultStudy Z bus")
 circuit1.print_zbus_table()
 
-# Display 7 Bus Power System Zbus
-print("Fault Current")
+# Display fault current at faulted bus
 circuit1.print_fault_current("Bus 1")
 
-# Display 7 Bus Power System Zbus
-print("Fault Bus Voltage")
+# Display fault bus voltage at faulted bus
 circuit1.print_fault_bus_voltage("Bus 1", "Bus 2")
 
 
