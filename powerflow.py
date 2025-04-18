@@ -14,12 +14,12 @@ class PowerFlow:
         self.max_iter = max_iter
 
     def calc_newton_raphson(self):
-        print("\n--- Iteration 0 ---")
-        print("Initial Bus Voltages and Angles")
+        #print("\n--- Iteration 0 ---")
+        #print("Initial Bus Voltages and Angles")
 
         # Loops through each bus and prints voltage pu and angle before iteration starts
-        for bus in self.buses:
-            print(f"{bus.name:.6s} | V = {bus.vpu:.5f} pu | δ = {bus.delta:.5f}°")
+        #for bus in self.buses:
+            #print(f"{bus.name:.6s} | V = {bus.vpu:.5f} pu | δ = {bus.delta:.5f}°")
 
         # Runs the newton raphson iteration
         for iteration in range(self.max_iter):
@@ -35,6 +35,9 @@ class PowerFlow:
             # Check for convergence
             if np.all(np.abs(mismatch_vector) < self.tol):
                 print(f"\nConverged in {iteration + 1} iterations")
+                print("\n--- Final Converged Bus Voltage and Angles ---")
+                for bus in self.buses:
+                    print(f"{bus.name:6s} | V = {bus.vpu:.5f} pu | δ = {bus.delta:.5f}°")
                 return True
 
             # Build jacobian matrix
@@ -44,8 +47,8 @@ class PowerFlow:
             J = jacobian.calc_jacobian()
 
             # Solves delta(x) = (J^-1) * mismatch_vector
-            self.print_vector(mismatch_vector, "Mismatch Vector [ΔP | ΔQ]")
-            self.print_matrix(J, "Jacobian Matrix J")
+            #self.print_vector(mismatch_vector, "Mismatch Vector [ΔP | ΔQ]")
+            #self.print_matrix(J, "Jacobian Matrix J")
             delta_x = np.linalg.solve(J, mismatch_vector)
             #self.print_vector(delta_x, "Update Vector Δx")
 
@@ -70,14 +73,16 @@ class PowerFlow:
             # Saves the update votage pu
             self.solution.voltages = [bus.vpu for bus in self.buses]
 
+            """
             # Prints iteration results and each iteration
             print(f"\n--- Iteration {iteration + 1} ---")
             for bus in self.buses:
                 print(f"{bus.name:6s} | V = {bus.vpu:.5f} pu | δ = {bus.delta:.5f}°")
 
             # Print angle and voltage updates
-            #print("Updated Voltage Angles (deg):", [round(float(bus.delta), 4) for bus in self.buses])
-            #print("Updated Voltage Magnitudes (p.u.):", [round(float(bus.vpu), 4) for bus in self.buses])
+            print("Updated Voltage Angles (deg):", [round(float(bus.delta), 4) for bus in self.buses])
+            print("Updated Voltage Magnitudes (p.u.):", [round(float(bus.vpu), 4) for bus in self.buses])
+            """
 
         print("\nDid not converge within the max number of iterations")
         return False

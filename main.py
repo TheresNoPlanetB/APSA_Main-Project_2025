@@ -41,8 +41,8 @@ circuit1.add_load("Load 4", "Bus 4", 100, 70)
 circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
 # Add Generator
-circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12)
-circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12)
+circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12, 0.14, 0.05, 125)
+circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12, 0.14, 0.05, 200)
 
 # Print network summary
 print(circuit1.network_summary())
@@ -51,36 +51,14 @@ print(circuit1.network_summary())
 circuit1.calc_ybus_powerflow()
 
 # Compute Ybus matrix for fault study
-circuit1.calc_ybus_faultstudy()
+circuit1.calc_ybus_faultstudy(sequence='positive')
 
 # Compute Zbus matrix for fault study
 circuit1.calc_zbus()
 
-# Compute fault current
-circuit1.calc_fault_current("Bus 1")
-
-# Compute fault voltage
-circuit1.calc_fault_bus_voltage("Bus 1", "Bus 2")
-
 # Display 7 Bus Power System Ybus Power Flow Matrix
 print("PowerFlow Y bus")
 circuit1.print_ybus_powerflow_table()
-
-# Display 7 Bus Power System Ybus Fault Study Matrix
-print("FaultStudy Y bus")
-circuit1.print_ybus_faultstudy_table()
-
-# Display 7 Bus Power System Zbus
-print("FaultStudy Z bus")
-circuit1.print_zbus_table()
-
-# Display fault current at faulted bus
-circuit1.print_fault_current("Bus 1")
-
-# Display fault bus voltage at faulted bus
-circuit1.print_fault_bus_voltage("Bus 1", "Bus 2")
-
-
 
 # Power Mismatch
 solution = Solution(buses=[], ybus=None, voltages=[])
@@ -103,3 +81,12 @@ jacobian.print_jacobian(J)
 powerflow = PowerFlow(solution=solution, tol = 0.001, max_iter = 5)
 powerflow.calc_newton_raphson()
 solution.print_power_mismatch(*solution.compute_power_mismatch_vector())
+
+# Display 7 Bus Power System Ybus Fault Study Matrix
+circuit1.print_ybus_faultstudy_table()
+
+# Display 7 Bus Power System Zbus
+circuit1.print_zbus_table()
+
+# Run symmetrical fault analysis at Bus 1
+circuit1.run_symmetrical_fault(faulted_bus_num=4)

@@ -51,12 +51,15 @@ class Circuit:
             raise ValueError("Both buses must be added to the circuit before adding a transmission line.")
         self.transmission_lines[name] = TransmissionLine(name, self.buses[bus1], self.buses[bus2], bundle, geometry, length)
 
-    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint, reactance):
+    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint, x1_pu, x2_pu, x0_pu, base_mva):
         if name in self.generators:
             raise ValueError(f"Generator {name} already exists in the circuit.")
         if bus_name not in self.buses:
             raise ValueError(f"Bus {bus_name} must be added before attaching a generator.")
-        self.generators[name] = Generator(name, self.buses[bus_name], voltage_setpoint, mw_setpoint, reactance)
+        self.generators[name] = Generator(
+            name, self.buses[bus_name], voltage_setpoint, mw_setpoint,
+            x1_pu, x2_pu, x0_pu, base_mva
+        )
 
     def add_load(self, name, bus_name, real_power, reactive_power):
         if name in self.loads:
@@ -78,7 +81,7 @@ class Circuit:
         # Bus names to indices for Ybus
         bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
 
-        # Retrieve info from transformer and transmission line
+        # Retrieve info from transformer
         for transformer in self.transformer.values():
             bus1, bus2 = transformer.bus1.name, transformer.bus2.name
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
@@ -91,7 +94,7 @@ class Circuit:
             # Add mutual admittance (off-diagonal elements, negative values)
             self.ybus_powerflow[idx1, idx2] += Yprim[0, 1]
             self.ybus_powerflow[idx2, idx1] += Yprim[1, 0]
-
+        # Retrieve info from transmission line
         for tline in self.transmission_lines.values():
             bus1, bus2 = tline.bus1.name, tline.bus2.name
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
@@ -109,7 +112,15 @@ class Circuit:
         if np.any(np.diag(self.ybus_powerflow) == 0):
             raise ValueError("Singular Ybus detected. Ensure all buses have self-admittance.")
 
-    def calc_ybus_faultstudy(self):
+        # Add generator subtransient admittance (for power flow study)
+        for generator in self.generators.values():
+            bus_name = generator.bus.name
+            idx = bus_indices[bus_name]
+            if generator.x1_pu > 0:
+                y_gen = 1 / (1j * generator.x1_pu)  # Subtransient admittance
+                self.ybus_powerflow[idx, idx] += y_gen
+
+    def calc_ybus_faultstudy(self, sequence: str = 'positive'):
         # Ybus matrix by summing the primitive admittance matrices.
 
         # Initialize Ybus matrix (N x N zero matrix)
@@ -150,13 +161,21 @@ class Circuit:
             self.ybus_faultstudy[idx2, idx1] += Yprim[1, 0]
 
         for generator in self.generators.values():
-            bus = generator.bus.name
-            idx = bus_indices[bus]
-            reactance = complex(generator.reactance)
-            admittance = 1/reactance
+            bus_name = generator.bus.name
+            idx = bus_indices[bus_name]
 
-            self.ybus_faultstudy[idx, idx] += reactance
-            self.ybus_faultstudy[idx, idx] += admittance
+            if sequence == 'positive':
+                x = generator.x1_pu
+            elif sequence == 'negative':
+                x = generator.x2_pu
+            elif sequence == 'zero':
+                x = generator.x0_pu
+            else:
+                continue
+
+            if x > 0:
+                y_gen = 1 / (1j * x)
+                self.ybus_faultstudy[idx, idx] += y_gen
 
             # Numerical stability
         if np.any(np.diag(self.ybus_faultstudy) == 0):
@@ -166,29 +185,69 @@ class Circuit:
         #calculate z bus
         self.zbus = np.linalg.inv(self.ybus_faultstudy)
 
-    def calc_fault_current(self, faulted_bus):
-        bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
-        #calculate fault current
-        idx = bus_indices[faulted_bus]
-        self.fault_current = self.V_f/self.zbus[idx, idx]
-        #store in an array
+    def calc_fault_current(self, Zbus, faulted_bus_num: int):
+        """
+        Calculate fault current at the faulted bus using provided Zbus matrix.
+        Args:
+            Zbus (np.ndarray): The Zbus matrix to use (typically with generator subtransients).
+            faulted_bus_num (int): 1-based index of faulted bus
+        """
+        idx = faulted_bus_num - 1  # Convert to 0-based index
+        self.fault_current = self.V_f / Zbus[idx, idx]
         self.fault_currents.append(self.fault_current)
 
-    def print_fault_current(self, faulted_bus):
-        print(f"Fault Current at faulted {faulted_bus} is {self.fault_current}")
+    def print_fault_current(self, faulted_bus_num: int):
+        print(f"Fault Current at Bus {faulted_bus_num} is {self.fault_current:.4f} pu")
 
-    def calc_fault_bus_voltage(self, faulted_bus, bus):
-        bus_indices = {bus_name: idx for idx, bus_name in enumerate(self.buses.keys())}
-        #calculate fault bus voltage
-        idx_fault = bus_indices[faulted_bus]
-        idx_normal = bus_indices[bus]
-        self.fault_bus_v = (1.0 - self.zbus[idx_fault, idx_normal] / self.zbus[idx_fault, idx_fault])*self.V_f
-        #store in an array
+    def calc_fault_bus_voltage(self, Zbus, faulted_bus_num: int, observed_bus_num: int):
+        """
+        Calculate voltage at an observed bus due to a fault at another bus.
+        Args:
+            Zbus (np.ndarray): The Zbus matrix used in fault calculation.
+            faulted_bus_num (int): 1-based index of faulted bus
+            observed_bus_num (int): 1-based index of observed bus
+        """
+        idx_fault = faulted_bus_num - 1
+        idx_obs = observed_bus_num - 1
+        self.fault_bus_v = (1.0 - Zbus[idx_fault, idx_obs] / Zbus[idx_fault, idx_fault]) * self.V_f
         self.fault_bus_vs.append(self.fault_bus_v)
 
-    def print_fault_bus_voltage(self, faulted_bus, bus):
-        print(f"Fault bus voltage at {bus} is {self.fault_bus_v}")
+    def print_fault_bus_voltage(self, observed_bus_num: int):
+        print(f"Voltage at Bus {observed_bus_num} during fault is {self.fault_bus_v:.4f} pu")
 
+    def get_zbus_with_generators(self):
+        if self.zbus is None:
+            raise ValueError("Zbus not yet calculated. Run calc_zbus() first.")
+        return self.zbus
+
+    def run_symmetrical_fault(self, faulted_bus_num: int):
+        """
+        Perform symmetrical fault analysis at a specific bus.
+        Args:
+            faulted_bus_num (int): 1-based index of the faulted bus
+        """
+        Zbus = self.get_zbus_with_generators()
+        idx = faulted_bus_num - 1
+
+        Zkk = Zbus[idx, idx]
+        I_fault = self.V_f / Zkk
+        self.fault_current = I_fault
+        self.fault_currents.append(I_fault)
+
+        # Header
+        print(f"\n--- Symmetrical Fault at Bus {faulted_bus_num} ---")
+        print(f"Zkk = {Zkk.real:.4f}{Zkk.imag:+.4f}j")
+        print(f"I_fault = {I_fault.real:.4f}{I_fault.imag:+.4f}j pu, |I_fault| = {abs(I_fault):.4f} pu\n")
+
+        # Calculate fault voltages at all buses
+        self.fault_bus_vs = []
+        print("Bus Voltages During Fault:")
+        for bus_num in range(1, len(self.buses) + 1):
+            idx_k = faulted_bus_num - 1
+            idx_i = bus_num - 1
+            V = (1.0 - Zbus[idx_k, idx_i] / Zbus[idx_k, idx_k]) * self.V_f
+            self.fault_bus_vs.append(V)
+            print(f"Bus {bus_num}: V = {V.real:.4f}{V.imag:+.4f}j pu")
 
     def get_ybus_powerflow(self):
         #Returns the computed Ybus matrix.
@@ -223,19 +282,19 @@ class Circuit:
         ]
 
         # Print 7 Bus Power System Ybus Matrix
-        print("\nYbus Admittance Matrix:")
+        print("\nYbus with Generator Subtransient Reactance Included:")
         headers = ["Bus"] + [f"Bus {i + 1}" for i in range(len(self.ybus_faultstudy))]
         print(tabulate(formatted_matrix, headers=headers, tablefmt="grid"))
 
     def print_zbus_table(self):
         # Format matrix elements as "real + imag j"
         formatted_matrix = [
-            [f"Bus {i + 1}"] + [f"{elem.real:.2f}{elem.imag:+.2f}j" for elem in row]
+            [f"Bus {i + 1}"] + [f"{elem.real:.4f}{elem.imag:+.4f}j" for elem in row]
             for i, row in enumerate(self.zbus)
         ]
 
         # Print 7 Bus Power System Ybus Matrix
-        print("\nYbus Admittance Matrix:")
+        print("\nZbus Matrix with Generator Subtransients:")
         headers = ["Bus"] + [f"Bus {i + 1}" for i in range(len(self.zbus))]
         print(tabulate(formatted_matrix, headers=headers, tablefmt="grid"))
 
@@ -292,19 +351,3 @@ class Circuit:
                 f"Transmission Lines={list(self.transmission_lines.keys())})"
                 f"Generators={list(self.generators.keys())})"
                 f"Loads={list(self.loads.keys())})")
-
-if __name__ == '__main__':
-    from bus import Bus
-
-    circuit1 = Circuit("Test Circuit")
-
-    # Check attributes initialization
-    print(circuit1.name)
-    print(type(circuit1.name))
-    print(circuit1.buses)
-    print(type(circuit1.buses))
-
-    # Add and retrieve equipment components
-    circuit1.add_bus("Bus1", 230, "PQ Bus")
-    print(circuit1.buses["Bus1"])
-    print(type(circuit1.buses["Bus1"]))
