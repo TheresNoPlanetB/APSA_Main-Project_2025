@@ -6,6 +6,7 @@ from generator import Generator
 from load import Load
 import numpy as np
 from tabulate import tabulate
+from solution import Solution
 
 
 # Circuits are Cool :)
@@ -220,34 +221,46 @@ class Circuit:
             raise ValueError("Zbus not yet calculated. Run calc_zbus() first.")
         return self.zbus
 
-    def run_symmetrical_fault(self, faulted_bus_num: int):
+    def run_sym_fault(self, faulted_bus_idx: int, fault_impedance: float = 0.0):
         """
-        Perform symmetrical fault analysis at a specific bus.
-        Args:
-            faulted_bus_num (int): 1-based index of the faulted bus
+        Run symmetrical (3-phase) fault analysis at a specified bus.
+
+        :param faulted_bus_idx: The 1-based index of the faulted bus
+        :param fault_impedance: Fault impedance in per unit (default 0 for bolted fault)
         """
-        Zbus = self.get_zbus_with_generators()
-        idx = faulted_bus_num - 1
+        idx = faulted_bus_idx - 1  # Convert to 0-based index
+        Zf = fault_impedance
 
-        Zkk = Zbus[idx, idx]
-        I_fault = self.V_f / Zkk
-        self.fault_current = I_fault
-        self.fault_currents.append(I_fault)
+        # Step 1: Get positive-sequence Zbus matrix
+        self.calc_ybus_faultstudy('positive')
+        Z1 = np.linalg.inv(self.ybus_faultstudy)
+        Z1kk = Z1[idx, idx]
 
-        # Header
-        print(f"\n--- Symmetrical Fault at Bus {faulted_bus_num} ---")
-        print(f"Zkk = {Zkk.real:.4f}{Zkk.imag:+.4f}j")
-        print(f"I_fault = {I_fault.real:.4f}{I_fault.imag:+.4f}j pu, |I_fault| = {abs(I_fault):.4f} pu\n")
+        Vf = self.V_f  # Prefault voltage, assumed 1.0 pu
 
-        # Calculate fault voltages at all buses
-        self.fault_bus_vs = []
-        print("Bus Voltages During Fault:")
-        for bus_num in range(1, len(self.buses) + 1):
-            idx_k = faulted_bus_num - 1
-            idx_i = bus_num - 1
-            V = (1.0 - Zbus[idx_k, idx_i] / Zbus[idx_k, idx_k]) * self.V_f
-            self.fault_bus_vs.append(V)
-            print(f"Bus {bus_num}: V = {V.real:.4f}{V.imag:+.4f}j pu")
+        # Step 2: Calculate positive-sequence fault current
+        If1 = Vf / (Z1kk + Zf)
+
+        print(f"\n--- Symmetrical (3-Phase) Fault at Bus {faulted_bus_idx} ---")
+        print(f"Positive Sequence Fault Current: I1 = {If1:.4f} pu")
+
+        # Step 3: Calculate post-fault voltages at all buses
+        from sym_components import seq_to_abc
+        print("\nPost-Fault Voltages at all Buses:")
+        for i in range(len(self.buses)):
+            V1 = Vf - Z1[idx, i] * If1
+            V2 = 0
+            V0 = 0
+            va, vb, vc = seq_to_abc(V0, V1, V2)
+
+            mag_a, ang_a = abs(va), np.angle(va, deg=True)
+            mag_b, ang_b = abs(vb), np.angle(vb, deg=True)
+            mag_c, ang_c = abs(vc), np.angle(vc, deg=True)
+
+            print(f"Bus {i + 1}:")
+            print(f"  Sequence Voltages: V0 = {V0:.4f}, V1 = {V1:.4f}, V2 = {V2:.4f}")
+            print(f"  Phase Voltages:   Va = {mag_a:.4f}∠{ang_a:.1f}°, "
+                  f"Vb = {mag_b:.4f}∠{ang_b:.1f}°, Vc = {mag_c:.4f}∠{ang_c:.1f}°")
 
     def get_ybus_powerflow(self):
         #Returns the computed Ybus matrix.
@@ -351,3 +364,85 @@ class Circuit:
                 f"Transmission Lines={list(self.transmission_lines.keys())})"
                 f"Generators={list(self.generators.keys())})"
                 f"Loads={list(self.loads.keys())})")
+
+        # --- FIXED circuit.py Add-on (correct syntax for LL fault) ---
+        # Add this method inside the Circuit class
+
+        # --- FIXED circuit.py Add-on (correct syntax for LL fault) ---
+        # Add this method inside the Circuit class
+
+        # --- FIXED circuit.py Add-on (correct syntax for LL fault) ---
+        # Add this method inside the Circuit class
+
+    def run_asym_fault(self, fault_type: str, faulted_bus_idx: int, fault_impedance: float = 0.0):
+            """
+            Run asymmetrical fault analysis (SLG, LL, DLG) at a specified bus.
+
+            :param fault_type: Type of fault ('SLG', 'LL', or 'DLG')
+            :param faulted_bus_idx: The 1-based index of the faulted bus
+            :param fault_impedance: Fault impedance (default is 0 for bolted fault)
+            """
+            Zf = fault_impedance  # Fault impedance in pu
+            idx = faulted_bus_idx - 1  # Convert to 0-based index
+
+            # Step 1: Calculate positive-, negative-, and zero-sequence Zbus matrices
+            self.calc_ybus_faultstudy('positive')
+            Z1 = np.linalg.inv(self.ybus_faultstudy)
+
+            self.calc_ybus_faultstudy('negative')
+            Z2 = np.linalg.inv(self.ybus_faultstudy)
+
+            self.calc_ybus_faultstudy('zero')
+            Z0 = np.linalg.inv(self.ybus_faultstudy)
+
+            # Extract diagonal elements at faulted bus
+            Z1kk = Z1[idx, idx]
+            Z2kk = Z2[idx, idx]
+            Z0kk = Z0[idx, idx]
+
+            Vf = self.V_f  # Prefault voltage (assumed 1.0 pu)
+
+            print(f"\n--- {fault_type} Fault at Bus {faulted_bus_idx} ---")
+
+            # Step 2: Compute sequence fault currents for each fault type
+            if fault_type == "SLG":
+                # SLG: I0 = I1 = I2 = Vf / (Z0 + Z1 + Z2 + 3Zf)
+                If0 = If1 = If2 = Vf / (Z0kk + Z1kk + Z2kk + 3 * Zf)
+            elif fault_type == "LL":
+                # LL: I1 = Vf / (Z1 + Z2 + Zf), I2 = -I1, I0 = 0
+                If1 = Vf / (Z1kk + Z2kk + Zf)
+                If2 = -If1
+                If0 = 0
+            elif fault_type == "DLG":
+                # DLG: Derived using symmetrical component network formulas
+                Ztotal = (Z1kk * (Z2kk + Z0kk) + Z2kk * Z0kk)
+                If1 = Vf * (Z2kk + Z0kk) / Ztotal
+                If2 = Vf * (Z0kk + Z1kk) / Ztotal
+                If0 = Vf * (Z1kk + Z2kk) / Ztotal
+            else:
+                print("Unsupported fault type.")
+                return
+
+            print(f"Sequence Currents: I0 = {If0:.4f}, I1 = {If1:.4f}, I2 = {If2:.4f}")
+
+            from sym_components import seq_to_abc
+            Va, Vb, Vc = seq_to_abc(0, Vf, 0)
+            print(f"Pre-Fault Voltages at Bus {faulted_bus_idx}: A = {Va:.4f}, B = {Vb:.4f}, C = {Vc:.4f}")
+
+            # Step 3: Calculate and print post-fault voltages and sequence voltages at each bus
+            print("\nPost-Fault Voltages and Sequence Voltages at all Buses:")
+            for i in range(len(self.buses)):
+                V1 = Vf - Z1[idx, i] * If1  # Positive-sequence voltage
+                V2 = -Z2[idx, i] * If2  # Negative-sequence voltage
+                V0 = -Z0[idx, i] * If0  # Zero-sequence voltage
+                va, vb, vc = seq_to_abc(V0, V1, V2)  # Convert to phase voltages
+
+                mag_a, ang_a = abs(va), np.angle(va, deg=True)
+                mag_b, ang_b = abs(vb), np.angle(vb, deg=True)
+                mag_c, ang_c = abs(vc), np.angle(vc, deg=True)
+
+                print(f"Bus {i + 1}:")
+                print(f"  Sequence Voltages: V0 = {V0:.4f}, V1 = {V1:.4f}, V2 = {V2:.4f}")
+                print(
+                    f"  Phase Voltages:   Va = {mag_a:.4f}∠{ang_a:.1f}°, Vb = {mag_b:.4f}∠{ang_b:.1f}°, Vc = {mag_c:.4f}∠{ang_c:.1f}°")
+

@@ -1,39 +1,34 @@
+# --- UPDATED solution.py with Comments ---
 import numpy as np
 
 class Solution:
     def __init__(self, buses, ybus, voltages):
         """
-        Initializes the system settings class with Ybus and buses.
-        :param buses: list of bus object
+        Initializes the Solution class with system data
+        :param buses: list of bus objects
         :param ybus: system admittance matrix
-        :param voltages: voltage vector
+        :param voltages: list of initial voltage magnitudes (pu)
         """
-        self.buses = buses # System admittance matrix
-        self.ybus = ybus # List of bus objects
-        self.voltages = voltages # List of voltage magnitudes (per uint) for all buses
+        self.buses = buses
+        self.ybus = ybus
+        self.voltages = voltages
 
     def initialize_system(self, circuit):
         """
-        Initializes bus voltages, loads, generators, and calculates Ybus.
+        Initializes the bus voltage settings, sets loads and generator injections,
+        and generates the Ybus matrix for power flow analysis.
         """
-        # Set voltage and angle for all buses
-        # Example hard-coded values
-
-        # Set voltage and angle for all buses
         for bus in circuit.buses.values():
             bus.vpu = 1.0
             bus.delta = 0.0
 
-        # Set load powers (as negative injections)
         for load in circuit.loads.values():
-            load.bus.P_spec -= load.real_power / 100 # Converted from MW to p.u. by dividing by 100
-            load.bus.Q_spec -= load.reactive_power / 100 # Converted from MVAR to p.u. by dividing by 100
+            load.bus.P_spec -= load.real_power / 100
+            load.bus.Q_spec -= load.reactive_power / 100
 
-        # Set generator real power contributions
         for gen in circuit.generators.values():
-            gen.bus.P_spec += gen.mw_setpoint / 100 # Converted from MW to p.u. by dividing by 100
+            gen.bus.P_spec += gen.mw_setpoint / 100
 
-        # Calculate Ybus and update internal state
         circuit.calc_ybus_powerflow()
         self.buses = list(circuit.buses.values())
         self.ybus = circuit.get_ybus_powerflow()
@@ -41,17 +36,14 @@ class Solution:
 
     def compute_power_injection(self, bus_k_index, angles):
         """
-        Calculate real and reactive power at specific bus.
-        bus_k_index: index of the bus you're calculating power injection for (k)
-        angles: list of voltage angles (in degrees) for all buses
+        Calculates the real and reactive power injected at a given bus index.
+        :param bus_k_index: index of the bus to calculate power injection for
+        :param angles: list of voltage angles in degrees
+        :return: P_k, Q_k real and reactive power at the bus (pu)
         """
-        P_k = 0  # Total real power injection at bus k
-        Q_k = 0  # Total reactive power injection at bus k
-        V_k = self.voltages[bus_k_index]  # Voltage magnitude at bus k
-        delta_k = np.radians(angles[bus_k_index])  # Voltage angle at bus k (in radians)
-
-        #print(f"\n--- Calculating Power Injection for Bus {bus_k_index + 1} ---")
-        #print(f"V_k = {V_k:.2f}, δ_k (rad) = {delta_k:.2f}")
+        P_k, Q_k = 0, 0
+        V_k = self.voltages[bus_k_index]
+        delta_k = np.radians(angles[bus_k_index])
 
         for n in range(len(self.voltages)):
             V_n = self.voltages[n]
@@ -59,70 +51,77 @@ class Solution:
             Y_kn = self.ybus[bus_k_index, n]
             Y_mag = np.abs(Y_kn)
             Y_angle = np.angle(Y_kn)
-
             angle_diff = delta_k - delta_n - Y_angle
-
-            # Calculate each term in the power summation
-            term_P = V_k * V_n * Y_mag * np.cos(angle_diff)
-            term_Q = V_k * V_n * Y_mag * np.sin(angle_diff)
-
-            # Accumulate total power injections
-            P_k += term_P
-            Q_k += term_Q
-
-            # Print term details
-            #print(f"\nTerm {n + 1}:")
-            #print(f"  V_n = {V_n:.2f}, δ_n (rad) = {delta_n:.2f}")
-            #print(f"  |Y_kn| = {Y_mag:.2f}, ∠Y_kn = {Y_angle:.2f} rad")
-            #print(f"  θ_diff = {angle_diff:.2f}")
-            #print(f"  P_term = {term_P:.2f}, Q_term = {term_Q:.2f}")
-
-        #print(f"\nTotal P_inj = {P_k:.2f} p.u. ({P_k * 100:.2f} MW)")
-        #print(f"Total Q_inj = {Q_k:.2f} p.u. ({Q_k * 100:.2f} MVAR)")
+            P_k += V_k * V_n * Y_mag * np.cos(angle_diff)
+            Q_k += V_k * V_n * Y_mag * np.sin(angle_diff)
 
         return P_k, Q_k
 
     def compute_power_mismatch_vector(self):
         """
-        Computes the full power mismatch vector ΔP and ΔQ for all non-slack buses.
-        Returns a NumPy array representing the mismatch vector used in Newton-Raphson.
+        Computes mismatch vector ΔP and ΔQ for non-slack buses.
+        :return: numpy arrays delta_P, delta_Q
         """
-        delta_P = []
-        delta_Q = []
-        angles = [bus.delta for bus in self.buses]  # degrees
-
-        #print("\n--- Power Mismatch Calculations ---")
+        delta_P, delta_Q = [], []
+        angles = [bus.delta for bus in self.buses]
 
         for bus in self.buses:
             if bus.bus_type == "Slack Bus":
                 delta_P.append(0)
                 delta_Q.append(0)
-                continue  # Skip slack bus
+                continue
 
-            # Compute injected power
             P_calc, Q_calc = self.compute_power_injection(bus.index, angles)
-
-            # Compute mismatch (multiply by 100 to convert from p.u. to MW/MVAR)
-            dP = (bus.P_spec - P_calc)
-            dQ = (bus.Q_spec - Q_calc) if bus.bus_type == "PQ Bus" else 0
-
-            # Append to vectors
+            dP = bus.P_spec - P_calc
+            dQ = bus.Q_spec - Q_calc if bus.bus_type == "PQ Bus" else 0
             delta_P.append(dP)
             delta_Q.append(dQ)
-
-            # Print detailed info
-            #print(f"\nBus {bus.name} ({bus.bus_type}):")
-            #print(f"  P_spec = {bus.P_spec * 100:.2f} MW,  P_calc = {P_calc * 100:.2f} MW → ΔP = {dP:.4f} MW")
-            #print(f"  Q_spec = {bus.Q_spec * 100:.2f} MVAR, Q_calc = {Q_calc * 100:.2f} MVAR → ΔQ = {dQ:.4f} MVAR")
 
         return np.array(delta_P), np.array(delta_Q)
 
     def print_power_mismatch(self, delta_P, delta_Q):
+        """
+        Print power mismatches for each bus.
+        """
         print("\n--- Power Mismatch ---")
         for i, bus in enumerate(self.buses):
             print(f"{bus.name} ({bus.bus_type}):")
             print(f"  MW:   {delta_P[i]: .5f}")
             print(f"  MVAR: {delta_Q[i]: .5f}")
+
+
+# ---------------------------------------------------------------
+# Symmetrical Component Transformation Utilities
+# These are necessary for converting between sequence and phase quantities.
+# ---------------------------------------------------------------
+
+    def abc_to_seq(va, vb, vc):
+        """
+        Transform 3-phase quantities (abc) to symmetrical components (012)
+        :param va: phase A quantity
+        :param vb: phase B quantity
+        :param vc: phase C quantity
+        :return: v0, v1, v2 (zero, positive, negative sequence components)
+        """
+        a = np.exp(1j * 2 * np.pi / 3)
+        v0 = (va + vb + vc) / 3
+        v1 = (va + a * vb + a**2 * vc) / 3
+        v2 = (va + a**2 * vb + a * vc) / 3
+        return v0, v1, v2
+
+    def seq_to_abc(v0, v1, v2):
+        """
+        Transform symmetrical components (012) to 3-phase quantities (abc)
+        :param v0: zero sequence component
+        :param v1: positive sequence component
+        :param v2: negative sequence component
+        :return: va, vb, vc (phase quantities)
+        """
+        a = np.exp(1j * 2 * np.pi / 3)
+        va = v0 + v1 + v2
+        vb = v0 + a**2 * v1 + a * v2
+        vc = v0 + a * v1 + a**2 * v2
+        return va, vb, vc
 
 if __name__ == "__main__":
 
