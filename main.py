@@ -5,6 +5,7 @@ from geometry import Geometry
 from solution import Solution
 from jacobian import Jacobian
 from powerflow import PowerFlow
+import numpy as np
 
 
 # Create circuit
@@ -42,8 +43,8 @@ circuit1.add_load("Load 4", "Bus 4", 100, 70)
 circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
 # Add Generator
-circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12, 0.14, 0.05, 125)
-circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12, 0.14, 0.05, 200)
+circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12, 0.14, 0.05, 125, grounded = True)
+circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12, 0.14, 0.05, 200, grounded = True)
 
 # Print network summary
 print(circuit1.network_summary())
@@ -89,26 +90,55 @@ circuit1.print_ybus_faultstudy_table()
 # Display 7 Bus Power System Zbus
 circuit1.print_zbus_table()
 
+##############################
+# Compute and print Z0, Z1, Z2 matrices
+print("\n--- Sequence Impedance Matrices ---")
 
-# The following lines demonstrate how to run the new asymmetrical
-# fault analysis capability for SLG, LL, and DLG fault types.
-# These use the 'run_asym_fault' method implemented in circuit.py.
+# Positive-sequence
+circuit1.calc_ybus_faultstudy('positive')
+print("\nY1 (Positive Sequence Ybus):")
+circuit1.print_ybus_faultstudy_table()
+Z1 = np.linalg.inv(circuit1.get_ybus_faultstudy())
+print("\nZ1 (Positive Sequence Zbus):")
+circuit1.zbus = Z1
+circuit1.print_zbus_table()
 
-# Run a Single Line-to-Ground (SLG) Fault at Bus 3
-print("\n--- SLG Fault at Bus 3 ---")
-circuit1.run_asym_fault("SLG", 3)  # Applies SLG fault at Bus 3
+# Negative-sequence
+circuit1.calc_ybus_faultstudy('negative')
+print("\nY2 (Negative Sequence Ybus):")
+circuit1.print_ybus_faultstudy_table()
+Z2 = np.linalg.inv(circuit1.get_ybus_faultstudy())
+print("\nZ2 (Negative Sequence Zbus):")
+circuit1.zbus = Z2
+circuit1.print_zbus_table()
+
+# Zero-sequence
+circuit1.calc_ybus_faultstudy('zero')
+print("\nY0 (Zero Sequence Ybus):")
+circuit1.print_ybus_faultstudy_table()
+Z0 = np.linalg.inv(circuit1.get_ybus_faultstudy())
+print("\nZ0 (Zero Sequence Zbus):")
+circuit1.zbus = Z0
+circuit1.print_zbus_table()
+##############################
+
+"""
+The following lines demonstrate how to run the new asymmetrical fault analysis capability for SLG, LL, and DLG fault types.
+These use the 'run_asym_fault' method implemented in circuit.py.
+Each function prints the sequence currents and phase voltages at every bus following the fault condition.
+"""
+
+"""
+# Run a Symmetrical (3-Phase) Fault at Bus 4
+circuit1.run_sym_fault(4)  # Applies 3-phase fault at Bus 4
+
+
+# Run a Single Line-to-Ground (SLG) Fault at Bus 4
+circuit1.run_asym_fault("SLG", 4)  # Applies SLG fault at Bus 4
 
 # Run a Line-to-Line (LL) Fault at Bus 4
-print("\n--- LL Fault at Bus 4 ---")
 circuit1.run_asym_fault("LL", 4)  # Applies LL fault at Bus 4
 
-# Run a Double Line-to-Ground (DLG) Fault at Bus 5
-print("\n--- DLG Fault at Bus 5 ---")
-circuit1.run_asym_fault("DLG", 5)  # Applies DLG fault at Bus 5
-
-# Each function prints the sequence currents and phase voltages
-# at every bus following the fault condition.
-
-# Run a Symmetrical (3-Phase) Fault at Bus 4
-print("\n--- Symmetrical Fault at Bus 4 ---")
-circuit1.run_sym_fault(4)  # Applies 3-phase fault at Bus 4
+# Run a Double Line-to-Ground (DLG) Fault at Bus 4
+circuit1.run_asym_fault("DLG", 4)  # Applies DLG fault at Bus 4
+"""

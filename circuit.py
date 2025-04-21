@@ -1,12 +1,11 @@
 from bus import Bus
-#from main import buses
 from transformer import Transformer
 from transmissionline import TransmissionLine
 from generator import Generator
 from load import Load
 import numpy as np
 from tabulate import tabulate
-from solution import Solution
+from sym_components import seq_to_abc
 
 
 # Circuits are Cool :)
@@ -52,14 +51,14 @@ class Circuit:
             raise ValueError("Both buses must be added to the circuit before adding a transmission line.")
         self.transmission_lines[name] = TransmissionLine(name, self.buses[bus1], self.buses[bus2], bundle, geometry, length)
 
-    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint, x1_pu, x2_pu, x0_pu, base_mva):
+    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint, x1_pu, x2_pu, x0_pu, base_mva, grounded):
         if name in self.generators:
             raise ValueError(f"Generator {name} already exists in the circuit.")
         if bus_name not in self.buses:
             raise ValueError(f"Bus {bus_name} must be added before attaching a generator.")
         self.generators[name] = Generator(
             name, self.buses[bus_name], voltage_setpoint, mw_setpoint,
-            x1_pu, x2_pu, x0_pu, base_mva
+            x1_pu, x2_pu, x0_pu, base_mva, grounded
         )
 
     def add_load(self, name, bus_name, real_power, reactive_power):
@@ -69,7 +68,7 @@ class Circuit:
             raise ValueError(f"Bus {bus_name} must be added before attaching a load.")
         self.loads[name] = Load(name, self.buses[bus_name], real_power, reactive_power)
 
-    def calc_ybus_powerflow(self):
+    def calc_ybus_powerflow(self, sequence: str = 'positive'):
         # Ybus matrix by summing the primitive admittance matrices.
 
         # Initialize Ybus matrix (N x N zero matrix)
@@ -86,7 +85,7 @@ class Circuit:
         for transformer in self.transformer.values():
             bus1, bus2 = transformer.bus1.name, transformer.bus2.name
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
-            Yprim = transformer.yprim  # Get primitive admittance matrix
+            Yprim = transformer.get_yprim(sequence)  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
             self.ybus_powerflow[idx1, idx1] += Yprim[0, 0]
@@ -99,7 +98,7 @@ class Circuit:
         for tline in self.transmission_lines.values():
             bus1, bus2 = tline.bus1.name, tline.bus2.name
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
-            Yprim = tline.yprim_pu  # Get primitive admittance matrix
+            Yprim = tline.get_yprim(sequence)  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
             self.ybus_powerflow[idx1, idx1] += Yprim[0, 0]
@@ -138,7 +137,7 @@ class Circuit:
         for transformer in self.transformer.values():
             bus1, bus2 = transformer.bus1.name, transformer.bus2.name
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
-            Yprim = transformer.yprim  # Get primitive admittance matrix
+            Yprim = transformer.get_yprim(sequence)  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
             self.ybus_faultstudy[idx1, idx1] += Yprim[0, 0]
@@ -151,7 +150,7 @@ class Circuit:
         for tline in self.transmission_lines.values():
             bus1, bus2 = tline.bus1.name, tline.bus2.name
             idx1, idx2 = bus_indices[bus1], bus_indices[bus2]
-            Yprim = tline.yprim_pu  # Get primitive admittance matrix
+            Yprim = tline.get_yprim(sequence)  # Get primitive admittance matrix
 
             # Add self-admittance (diagonal elements)
             self.ybus_faultstudy[idx1, idx1] += Yprim[0, 0]
@@ -167,20 +166,25 @@ class Circuit:
 
             if sequence == 'positive':
                 x = generator.x1_pu
+                if x > 0:
+                    y_gen = 1 / (1j * x)
+                    self.ybus_faultstudy[idx, idx] += y_gen
+
             elif sequence == 'negative':
                 x = generator.x2_pu
-            elif sequence == 'zero':
-                x = generator.x0_pu
-            else:
-                continue
+                if x > 0:
+                    y_gen = 1 / (1j * x)
+                    self.ybus_faultstudy[idx, idx] += y_gen
 
-            if x > 0:
-                y_gen = 1 / (1j * x)
-                self.ybus_faultstudy[idx, idx] += y_gen
+            elif sequence == 'zero':
+                if generator.grounded and generator.x0_pu > 0:
+                    y_gen = 1 / (1j * generator.x0_pu)
+                    self.ybus_faultstudy[idx, idx] += y_gen
 
             # Numerical stability
         if np.any(np.diag(self.ybus_faultstudy) == 0):
             raise ValueError("Singular Ybus detected. Ensure all buses have self-admittance.")
+        return self.ybus_faultstudy
 
     def calc_zbus(self):
         #calculate z bus
@@ -236,17 +240,16 @@ class Circuit:
         Z1 = np.linalg.inv(self.ybus_faultstudy)
         Z1kk = Z1[idx, idx]
 
-        Vf = self.V_f  # Prefault voltage, assumed 1.0 pu
+        Vf = self.V_f  # Pre-fault voltage, assumed 1.0 pu
 
         # Step 2: Calculate positive-sequence fault current
         If1 = Vf / (Z1kk + Zf)
 
         print(f"\n--- Symmetrical (3-Phase) Fault at Bus {faulted_bus_idx} ---")
-        print(f"Positive Sequence Fault Current: I1 = {If1:.4f} pu")
+        print(f"Fault Current: I_fault = {If1:.4f} pu, |I_fault| = {abs(If1):.4f} pu")
 
-        # Step 3: Calculate post-fault voltages at all buses
-        from sym_components import seq_to_abc
-        print("\nPost-Fault Voltages at all Buses:")
+        # Step 3: Calculate fault voltages at all buses
+        print("\nBus Voltages During Fault:")
         for i in range(len(self.buses)):
             V1 = Vf - Z1[idx, i] * If1
             V2 = 0
@@ -258,7 +261,7 @@ class Circuit:
             mag_c, ang_c = abs(vc), np.angle(vc, deg=True)
 
             print(f"Bus {i + 1}:")
-            print(f"  Sequence Voltages: V0 = {V0:.4f}, V1 = {V1:.4f}, V2 = {V2:.4f}")
+            #print(f"  Sequence Voltages: V0 = {V0:.4f}, V1 = {V1:.4f}, V2 = {V2:.4f}")
             print(f"  Phase Voltages:   Va = {mag_a:.4f}∠{ang_a:.1f}°, "
                   f"Vb = {mag_b:.4f}∠{ang_b:.1f}°, Vc = {mag_c:.4f}∠{ang_c:.1f}°")
 
@@ -328,7 +331,9 @@ class Circuit:
                                     f"    X/R Ratio: {transformer.x_over_r_ratio}\n"
                                     f"    Base MVA: {transformer.base_mva} MVA\n"
                                     f"    Admittance Matrix (Yprim) [pu]: \n"
-                                    f"{np.array2string(transformer.yprim, precision=4, separator=', ')}\n\n")
+                                    f"    Positive Sequence Yprim [pu]:\n{np.array2string(transformer.get_yprim('positive'), precision=4, separator=', ')}\n"
+                                    f"    Negative Sequence Yprim [pu]:\n{np.array2string(transformer.get_yprim('negative'), precision=4, separator=', ')}\n"
+                                    f"    Zero Sequence Yprim [pu]:\n{np.array2string(transformer.get_yprim('zero'), precision=4, separator=', ')}\n\n")
 
         # Summarize transmission lines with geometry info
         transmission_line_summary = "Transmission Lines in the Circuit:\n"
@@ -386,14 +391,14 @@ class Circuit:
             idx = faulted_bus_idx - 1  # Convert to 0-based index
 
             # Step 1: Calculate positive-, negative-, and zero-sequence Zbus matrices
-            self.calc_ybus_faultstudy('positive')
-            Z1 = np.linalg.inv(self.ybus_faultstudy)
+            ybus_positive = self.calc_ybus_faultstudy('positive')
+            Z1 = np.linalg.inv(ybus_positive)
 
-            self.calc_ybus_faultstudy('negative')
-            Z2 = np.linalg.inv(self.ybus_faultstudy)
+            ybus_negative = self.calc_ybus_faultstudy('negative')
+            Z2 = np.linalg.inv(ybus_negative)
 
-            self.calc_ybus_faultstudy('zero')
-            Z0 = np.linalg.inv(self.ybus_faultstudy)
+            ybus_zero = self.calc_ybus_faultstudy('zero')
+            Z0 = np.linalg.inv(ybus_zero)
 
             # Extract diagonal elements at faulted bus
             Z1kk = Z1[idx, idx]

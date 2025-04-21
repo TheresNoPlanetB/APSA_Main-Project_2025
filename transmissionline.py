@@ -9,7 +9,8 @@ class TransmissionLine:
     This class uses the Conductor and Geometry subclasses to determine its electrical characteristics.
     """
 
-    def __init__(self, name: str, bus1: Bus, bus2: Bus, bundle: Bundle, geometry: Geometry, length: float):
+    def __init__(self, name: str, bus1: Bus, bus2: Bus, bundle: Bundle, geometry: Geometry, length: float,
+                 connection_type: str = 'Transposed'):
         """
         Initialize the TransmissionLine object with the given parameters.
 
@@ -26,7 +27,8 @@ class TransmissionLine:
         self.bus2 = bus2  # The second bus connected by the transmission line
         self.bundle = bundle  # The bundle of conductors used in the transmission line
         self.geometry = geometry  # The physical arrangement of conductors in the transmission line
-        self.length = length  # Length of the transmission line
+        self.length = length  # Length of the transmission line in miles
+        self.connection_type = connection_type
         self.f = 60
         self.S_Base = 100
 
@@ -48,6 +50,11 @@ class TransmissionLine:
         self.calc_base_values()  # calculate base values
         self.calc_admittances()  # calculate admittances
         self.calc_yprim()  # calculate yprim
+
+        # Calculate sequence impedances and admittances
+        self.calc_sequence_impedances()
+        self.calc_sequence_admittances()
+        self.calc_all_yprim_sequences()
 
     def calc_base_values(self):
         """
@@ -99,11 +106,58 @@ class TransmissionLine:
         # Admittance matrix calculation (yprim)
         self.yprim_pu = np.array([[self.yseries_pu + (self.yshunt_pu/2), -self.yseries_pu],[-self.yseries_pu, self.yseries_pu + (self.yshunt_pu/2)]])
 
+    def calc_sequence_impedances(self):
+        """Calculate sequence impedances in p.u."""
+        # Series X from geometry (same for all sequences)
+        x_series = (2 * np.pi * self.f) * (2e-7) * np.log(self.geometry.Deq / self.bundle.DSL)
+        x_total = x_series * 1609.34 * self.length
+
+        # Series R from bundle
+        r_total = (self.bundle.conductor.resistance / self.bundle.num_conductors) * self.length
+
+        # Positive and negative sequence impedance (identical for transposed)
+        self.z1 = self.z2 = complex(r_total, x_total)
+
+        # Zero-sequence impedance (estimated as 2.5R + jX)
+        self.z0 = complex(2.5 * r_total, x_total)
+
+        # Convert to per-unit
+        self.z1_pu = self.z1 / self.zbase
+        self.z2_pu = self.z2 / self.zbase
+        self.z0_pu = self.z0 / self.zbase
+
+    def calc_sequence_admittances(self):
+        """Compute series admittance for each sequence (Y = 1/Z)."""
+        self.y1_pu = 1 / self.z1_pu if self.z1_pu != 0 else 0
+        self.y2_pu = 1 / self.z2_pu if self.z2_pu != 0 else 0
+        self.y0_pu = 1 / self.z0_pu if self.z0_pu != 0 else 0
+
+    def calc_yprim_sequence(self, yseq):
+        """Build a 2x2 Yprim matrix for a given sequence admittance."""
+        return np.array([[yseq, -yseq], [-yseq, yseq]])
+
+    def calc_all_yprim_sequences(self):
+        """Generate Yprim matrices for all three sequence networks."""
+        self.yprim_positive = self.calc_yprim_sequence(self.y1_pu)
+        self.yprim_negative = self.calc_yprim_sequence(self.y2_pu)
+        self.yprim_zero = self.calc_yprim_sequence(self.y0_pu)
+
+    def get_yprim(self, sequence: str = 'positive'):
+        """Return the Yprim matrix for the requested sequence."""
+        if sequence == 'positive':
+            return self.yprim_positive
+        elif sequence == 'negative':
+            return self.yprim_negative
+        elif sequence == 'zero':
+            return self.yprim_zero
+        else:
+            raise ValueError("Unknown sequence. Choose from 'positive', 'negative', 'zero'.")
+
     def __str__(self):
         """
         Return a string representation of the TransmissionLine object.
         """
-        return f"TransmissionLine(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, length={self.length})"
+        return f"TransmissionLine(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, length={self.length} mi, connection_type={self.connection_type})"
 
 if __name__ == '__main__':
 
