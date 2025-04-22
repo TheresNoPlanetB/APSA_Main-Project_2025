@@ -43,22 +43,22 @@ class Circuit:
             raise ValueError("Both buses must be added to the circuit before adding a transformer.")
         self.transformer[name] = Transformer(name, self.buses[bus1], self.buses[bus2], power_rating, impedance_percent, x_over_r_ratio, base_mva, connection_type, zg1, zg2)
 
-    def add_transmission_line(self, name, bus1, bus2, bundle, geometry, length, connection_type):
+    def add_transmission_line(self, name, bus1, bus2, bundle, geometry, length):
         # Adding transmission line into circuit
         if name in self.transmission_lines:
             raise ValueError(f"Transmission line {name} already exists in the circuit.")
         if bus1 not in self.buses or bus2 not in self.buses:
             raise ValueError("Both buses must be added to the circuit before adding a transmission line.")
-        self.transmission_lines[name] = TransmissionLine(name, self.buses[bus1], self.buses[bus2], bundle, geometry, length, connection_type)
+        self.transmission_lines[name] = TransmissionLine(name, self.buses[bus1], self.buses[bus2], bundle, geometry, length)
 
-    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint, x1_pu, x2_pu, x0_pu, base_mva, grounded):
+    def add_generator(self, name, bus_name, voltage_setpoint, mw_setpoint, x1_pu, x2_pu, x0_pu, base_mva, grounded, ground_r_pu):
         if name in self.generators:
             raise ValueError(f"Generator {name} already exists in the circuit.")
         if bus_name not in self.buses:
             raise ValueError(f"Bus {bus_name} must be added before attaching a generator.")
         self.generators[name] = Generator(
             name, self.buses[bus_name], voltage_setpoint, mw_setpoint,
-            x1_pu, x2_pu, x0_pu, base_mva, grounded
+            x1_pu, x2_pu, x0_pu, base_mva, grounded = grounded, grounding_r_pu = ground_r_pu
         )
 
     def add_load(self, name, bus_name, real_power, reactive_power):
