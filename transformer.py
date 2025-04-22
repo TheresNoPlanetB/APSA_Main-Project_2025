@@ -94,11 +94,11 @@ class Transformer:
 
             if 'Y' in self.connection_type:
                 if self.connection_type.startswith('Y'):
-                    if self.zg1 is not None:
-                        y11 = 1 / (1j * self.zg1) if self.zg1 > 0 else complex(0, 0)
+                    if self.zg1 is not None and self.zg1 > 0:
+                        y11 += 1 / (1j * self.zg1)
                 if self.connection_type.endswith('Y'):
-                    if self.zg2 is not None:
-                        y22 = 1 / (1j * self.zg2) if self.zg2 > 0 else complex(0, 0)
+                    if self.zg2 is not None and self.zg2 > 0:
+                        y22 += 1 / (1j * self.zg2)
 
             # Include series branch if both sides are grounded or at least one
             if y11 != 0 or y22 != 0:

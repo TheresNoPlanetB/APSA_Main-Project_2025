@@ -48,7 +48,7 @@ class Generator:
             if self.grounded:
                 return self.x0pp_pu + self.grounding_z_pu.imag
             else:
-                raise self.x0pp_pu # No grounding reactance added
+                return self.x0pp_pu # No grounding reactance added
         else:
             raise ValueError("Invalid sequence type")
 
