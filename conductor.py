@@ -1,36 +1,71 @@
-class Conductor:
+class SolarPV:
     """
-    The Conductor class models the physical and electrical characteristics of a conductor used in transmission lines.
+    The SolarPV class models a grid-connected solar PV generator.
+    It injects real power (P) and maintains constant voltage magnitude like a PV bus.
     """
 
-    def __init__(self, name: str, diam: float, GMR: float, resistance: float, ampacity: float):
+    def __init__(self, name: str, bus, rated_power: float, voltage_setpoint: float = 1.0):
         """
-        Initialize the Conductor object with the given parameters.
+        Initialize the SolarPV generator.
 
-        :param name: Name of the conductor
-        :param diam: Diameter of the conductor (in inches)
-        :param GMR: Geometric Mean Radius (in feet)
-        :param resistance: Resistance of the conductor (in ohms per mile)
-        :param ampacity: Ampacity of the conductor (in amperes)
+        :param name: Name of the solar PV unit
+        :param bus: Associated bus object
+        :param rated_power: Rated power output in MW
+        :param voltage_setpoint: Voltage setpoint in per unit (default 1.0)
         """
-        self.name = name  # Name of the conductor
-        self.diam = diam  # Diameter of the conductor
-        self.GMR = GMR  # Geometric Mean Radius of the conductor
-        self.resistance = resistance  # Electrical resistance of the conductor
-        self.ampacity = ampacity  # Maximum current carrying capacity of the conductor
+        self.name = name
+        self.bus = bus
+        self.rated_power = rated_power
+        self.voltage_setpoint = voltage_setpoint
 
-    def __str__(self):
-        """
-        Return a string representation of the Conductor object.
-        """
-        return f"Conductor(name={self.name}, diam={self.diam}, GMR={self.GMR}, resistance={self.resistance}, ampacity={self.ampacity})"
+        self.validate()
 
+    def validate(self):
+        """
+        Validates the rated power and voltage setpoint of the PV unit.
+        """
+        if self.rated_power < 0:
+            raise ValueError(f"Rated power for {self.name} must be non-negative.")
+        if not (0.9 <= self.voltage_setpoint <= 1.1):
+            raise ValueError(f"Voltage setpoint for {self.name} must be within [0.9, 1.1] p.u.")
+
+    def inject_power(self):
+        """
+        Apply power injection to the bus. Acts as a PV generator.
+        """
+        self.bus.P_spec += self.rated_power / 100  # convert to per unit on 100 MVA base
+        self.bus.vpu = self.voltage_setpoint
+
+
+# ☀️ Run validations if executed directly
 if __name__ == '__main__':
-    from conductor import Conductor
+    class DummyBus:
+        def __init__(self, name):
+            self.name = name
+            self.P_spec = 0
+            self.vpu = 1.0
 
-    conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
-    print(
-        f"Name:{conductor1.name}, Diam:{conductor1.diam}, GMR:{conductor1.GMR}, resistance:{conductor1.resistance}, ampacity:{conductor1.ampacity}")
+    print("Running SolarPV validation tests...\n")
 
+    # ✅ Valid PV
+    try:
+        bus = DummyBus("Bus A")
+        pv = SolarPV("PV1", bus, rated_power=50, voltage_setpoint=1.0)
+        pv.inject_power()
+        print(f"{pv.name} successfully injected {pv.rated_power} MW at {pv.voltage_setpoint} p.u. to {pv.bus.name}")
+    except ValueError as e:
+        print("Failed valid PV test:", e)
 
+    # ❌ Invalid power
+    try:
+        bus = DummyBus("Bus B")
+        pv = SolarPV("PV2", bus, rated_power=-20, voltage_setpoint=1.0)
+    except ValueError as e:
+        print("Correctly caught invalid power:", e)
 
+    # ❌ Invalid voltage
+    try:
+        bus = DummyBus("Bus C")
+        pv = SolarPV("PV3", bus, rated_power=30, voltage_setpoint=1.2)
+    except ValueError as e:
+        print("Correctly caught invalid voltage:", e)

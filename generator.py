@@ -66,18 +66,28 @@ class Generator:
 
 
 if __name__ == '__main__':
-    from bus import Bus
+    # Create test bus
+    bus = Bus("Bus 7", 50, "PV Bus")
 
-    buses = [
-        Bus("Bus 7", 50, "PV Bus")
-    ]
+    # Create a generator with all required parameters
+    gen = Generator(
+        name="Gen1",
+        bus=bus,
+        voltage_setpoint=1.0,  # p.u.
+        mw_setpoint=145,       # MW
+        x1_pu=0.2,
+        x2_pu=0.2,
+        x0_pu=0.05,
+        base_mva=100,
+        grounded=True  # Optional, defaults to True
+    )
 
-    generators = [
-        Generator("Gen1", buses[0], 230, 145),
-    ]
-
-    for generator in generators:
-        bus = generator.bus
-        print(
-            f"Name: {generator.name}, Bus: {bus.name}, Voltage: {bus.base_kv}V, " 
-            f"Voltage Setpoint: {generator.voltage_setpoint}V, MW Setpoint: {generator.mw_setpoint}MW")
+    # Print to validate
+    print(f"Generator: {gen.name}")
+    print(f" Bus: {gen.bus.name}")
+    print(f" Voltage Setpoint: {gen.voltage_setpoint} pu")
+    print(f" MW Setpoint: {gen.mw_setpoint} MW")
+    print(f" X1_pu: {gen.x1_pu}")
+    print(f" X2_pu: {gen.x2_pu}")
+    print(f" X0_pu: {gen.x0_pu}")
+    print(f" Grounded: {gen.grounded}")

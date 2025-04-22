@@ -1,4 +1,4 @@
-# --- UPDATED solution.py with Comments ---
+# --- UPDATED solution.py with Solar PV Support ☀️ ---
 import numpy as np
 
 class Solution:
@@ -17,6 +17,8 @@ class Solution:
         """
         Initializes the bus voltage settings, sets loads and generator injections,
         and generates the Ybus matrix for power flow analysis.
+
+        ☀️ Includes solar PV power injection at PV buses
         """
         for bus in circuit.buses.values():
             bus.vpu = 1.0
@@ -28,6 +30,10 @@ class Solution:
 
         for gen in circuit.generators.values():
             gen.bus.P_spec += gen.mw_setpoint / 100
+
+        # ☀️ Inject real power from solar PV units
+        for pv in circuit.solar_pvs.values():
+            pv.bus.P_spec += pv.get_pu_generation(circuit.S_base)
 
         circuit.calc_ybus_powerflow()
         self.buses = list(circuit.buses.values())
@@ -92,46 +98,49 @@ class Solution:
 
 # ---------------------------------------------------------------
 # Symmetrical Component Transformation Utilities
-# These are necessary for converting between sequence and phase quantities.
 # ---------------------------------------------------------------
 
-    def abc_to_seq(va, vb, vc):
-        """
-        Transform 3-phase quantities (abc) to symmetrical components (012)
-        :param va: phase A quantity
-        :param vb: phase B quantity
-        :param vc: phase C quantity
-        :return: v0, v1, v2 (zero, positive, negative sequence components)
-        """
-        a = np.exp(1j * 2 * np.pi / 3)
-        v0 = (va + vb + vc) / 3
-        v1 = (va + a * vb + a**2 * vc) / 3
-        v2 = (va + a**2 * vb + a * vc) / 3
-        return v0, v1, v2
+def abc_to_seq(va, vb, vc):
+    """
+    Transform 3-phase quantities (abc) to symmetrical components (012)
+    :param va: phase A quantity
+    :param vb: phase B quantity
+    :param vc: phase C quantity
+    :return: v0, v1, v2 (zero, positive, negative sequence components)
+    """
+    a = np.exp(1j * 2 * np.pi / 3)
+    v0 = (va + vb + vc) / 3
+    v1 = (va + a * vb + a**2 * vc) / 3
+    v2 = (va + a**2 * vb + a * vc) / 3
+    return v0, v1, v2
 
-    def seq_to_abc(v0, v1, v2):
-        """
-        Transform symmetrical components (012) to 3-phase quantities (abc)
-        :param v0: zero sequence component
-        :param v1: positive sequence component
-        :param v2: negative sequence component
-        :return: va, vb, vc (phase quantities)
-        """
-        a = np.exp(1j * 2 * np.pi / 3)
-        va = v0 + v1 + v2
-        vb = v0 + a**2 * v1 + a * v2
-        vc = v0 + a * v1 + a**2 * v2
-        return va, vb, vc
+def seq_to_abc(v0, v1, v2):
+    """
+    Transform symmetrical components (012) to 3-phase quantities (abc)
+    :param v0: zero sequence component
+    :param v1: positive sequence component
+    :param v2: negative sequence component
+    :return: va, vb, vc (phase quantities)
+    """
+    a = np.exp(1j * 2 * np.pi / 3)
+    va = v0 + v1 + v2
+    vb = v0 + a**2 * v1 + a * v2
+    vc = v0 + a * v1 + a**2 * v2
+    return va, vb, vc
 
-if __name__ == "__main__":
 
+# ---------------------------------------------------------------
+# ☀️ Validation Example
+# ---------------------------------------------------------------
+if __name__ == '__main__':
     from circuit import Circuit
     from conductor import Conductor
     from bundle import Bundle
     from geometry import Geometry
+    from solarpv import SolarPV
 
-    # Create circuit
-    circuit1 = Circuit("Circuit")
+    # Create and define test circuit
+    circuit1 = Circuit("Solar-Powered Circuit")
 
     # Add Buses
     circuit1.add_bus("Bus 1", 20, "Slack Bus")
@@ -143,39 +152,42 @@ if __name__ == "__main__":
     circuit1.add_bus("Bus 7", 18, "PV Bus")
 
     # Add Transformers
-    circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100)
-    circuit1.add_transformer("T2", "Bus 6", "Bus 7", 200, 10.5, 12, 100)
+    circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100, "Y-Y", 0, 0)
+    circuit1.add_transformer("T2", "Bus 6", "Bus 7", 200, 10.5, 12, 100, "Y-Y", 0, 0)
 
-    # Add Transmission Line Parameters
+    # Define transmission line parameters
     conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
     bundle1 = Bundle("Bundle A", 2, 1.5, conductor1)
     geometry1 = Geometry("Geometry 1", 0, 0, 19.5, 0, 39, 0)
 
     # Add Transmission Lines
-    circuit1.add_transmission_line("Line 1", "Bus 2", "Bus 4", bundle1, geometry1, 10)
-    circuit1.add_transmission_line("Line 2", "Bus 2", "Bus 3", bundle1, geometry1, 25)
-    circuit1.add_transmission_line("Line 3", "Bus 3", "Bus 5", bundle1, geometry1, 20)
-    circuit1.add_transmission_line("Line 4", "Bus 4", "Bus 6", bundle1, geometry1, 20)
-    circuit1.add_transmission_line("Line 5", "Bus 5", "Bus 6", bundle1, geometry1, 10)
-    circuit1.add_transmission_line("Line 6", "Bus 4", "Bus 5", bundle1, geometry1, 35)
+    circuit1.add_transmission_line("Line 1", "Bus 2", "Bus 4", bundle1, geometry1, 10, "Transposed")
+    circuit1.add_transmission_line("Line 2", "Bus 2", "Bus 3", bundle1, geometry1, 25, "Transposed")
+    circuit1.add_transmission_line("Line 3", "Bus 3", "Bus 5", bundle1, geometry1, 20, "Transposed")
+    circuit1.add_transmission_line("Line 4", "Bus 4", "Bus 6", bundle1, geometry1, 20, "Transposed")
+    circuit1.add_transmission_line("Line 5", "Bus 5", "Bus 6", bundle1, geometry1, 10, "Transposed")
+    circuit1.add_transmission_line("Line 6", "Bus 4", "Bus 5", bundle1, geometry1, 35, "Transposed")
 
-    # Add Load
+    # Add Loads
     circuit1.add_load("Load 3", "Bus 3", 110, 50)
     circuit1.add_load("Load 4", "Bus 4", 100, 70)
     circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
-    # Add Generator
-    circuit1.add_generator("G1", "Bus 1", 1.0, 113.56)
-    circuit1.add_generator("G2", "Bus 7", 1.0, 200)
-    ### Add rated voltage to generator class
+    # Add Generators
+    circuit1.add_generator("G1", "Bus 1", 1.0, 113.56, 0.1, 0.1, 0.05, 100, True)
+    circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.1, 0.1, 0.05, 100, True)
+
+    # ☀️ Add Solar PV
+    circuit1.add_solar_pv("PV1", "Bus 5", rated_power=50, voltage_setpoint=1.0)
 
     # Run validation
     solution = Solution(buses=[], ybus=None, voltages=[])
     solution.initialize_system(circuit1)
 
-    # Power Mismatch
+    # Compute power mismatches
     delta_P, delta_Q = solution.compute_power_mismatch_vector()
 
+    # Display mismatch results
     print("\n--- Power Mismatch ---")
     for i, bus in enumerate(solution.buses):
         print(f"{bus.name} ({bus.bus_type}):")
