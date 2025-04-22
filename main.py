@@ -21,8 +21,8 @@ circuit1.add_bus("Bus 6", 230,"PQ Bus")
 circuit1.add_bus("Bus 7", 18,"PV Bus")
 
 # Add Transformers
-circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100, connection_type = "DELTA-WYE", zg1 = None, zg2 = 1.0)
-circuit1.add_transformer("T2", "Bus 6", "Bus 7", 200, 10.5, 12, 100, connection_type = "WYE-DELTA", zg1 = None, zg2 = None)
+circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100, connection_type = "Y-Y", zg1 = None, zg2 = None)
+circuit1.add_transformer("T2", "Bus 6", "Bus 7", 200, 10.5, 12, 100, connection_type = "Y-Y", zg1 = None, zg2 = None)
 
 # Add Transmission Line Parameters
 conductor1 = Conductor("Partridge", 0.642, 0.0217, 0.385, 460)
@@ -43,8 +43,8 @@ circuit1.add_load("Load 4", "Bus 4", 100, 70)
 circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
 # Add Generator
-circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12, 0.14, 0.05, 125, grounded = True)
-circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12, 0.14, 0.05, 200, grounded = True)
+circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12, 0.14, 0.05, 125, grounded = False)
+circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12, 0.14, 0.05, 200, grounded = False)
 
 # Print network summary
 print(circuit1.network_summary())

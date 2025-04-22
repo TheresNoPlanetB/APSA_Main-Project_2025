@@ -3,84 +3,46 @@ from bus import Bus
 
 class Transformer:
     """
-    The Transformer class models a transformer in a power system.
-    Transformers connect two buses with specific parameters such as power rating, impedance, and X/R ratio.
+    The Transformer class models a transformer in a power system,
+    including grounding and connection types for sequence network modeling.
     """
 
     def __init__(self, name: str, bus1: Bus, bus2: Bus, power_rating: float, impedance_percent: float,
-                 x_over_r_ratio: float, base_mva: float, connection_type: str = "Y-Y", zg1: float = 0.0, zg2: float = 0.0):
-        """
-        Initialize the Transformer object with the given parameters.
-
-        :param name: Name of the transformer
-        :param bus1: The first bus connected by the transformer
-        :param bus2: The second bus connected by the transformer
-        :param power_rating: Power rating of the transformer (in MVA)
-        :param impedance_percent: Impedance of the transformer (in percent)
-        :param x_over_r_ratio: X/R ratio of the transformer
-        """
-        self.name = name  # Name of the transformer
-        self.bus1 = bus1  # The first bus connected by the transformer
-        self.bus2 = bus2  # The second bus connected by the transformer
-        self.power_rating = power_rating  # Power rating of the transformer
-        self.impedance_percent = impedance_percent  # Impedance of the transformer (in percent)
-        self.x_over_r_ratio = x_over_r_ratio  # X/R ratio of the transformer
-        self.base_mva = base_mva  # Base MVA for per-unit calculations
+                 x_over_r_ratio: float, base_mva: float, connection_type: str = "Y-Y",
+                 zg1: float = None, zg2: float = None):
+        self.name = name
+        self.bus1 = bus1
+        self.bus2 = bus2
+        self.power_rating = power_rating
+        self.impedance_percent = impedance_percent
+        self.x_over_r_ratio = x_over_r_ratio
+        self.base_mva = base_mva
         self.connection_type = connection_type.upper()
-        self.zg1 = zg1 # Grounding impedance on bus1 side (0 = solid, None = ungrounded)
-        self.zg2 = zg2 # Grounding impedance on bus2 side
+        self.zg1 = zg1  # Grounding impedance on bus1 side (None = ungrounded, 0 = solid)
+        self.zg2 = zg2
 
-        self.s_base = 100
+        self.s_base = 100  # System base MVA
 
-        # Calculate impedance and admittance values
         self.calc_impedance()
         self.calc_admittance()
 
-        # Store Yprim matrices for each sequence
         self.yprim_sequences = {
-            'positive': self.calc_yprim(sequence = 'positive'),
-            'negative': self.calc_yprim(sequence = 'negative'),
-            'zero': self.calc_yprim(sequence = 'zero'),
+            'positive': self.calc_yprim('positive'),
+            'negative': self.calc_yprim('negative'),
+            'zero': self.calc_yprim('zero'),
         }
 
     def calc_impedance(self):
-        """
-        Calculate the impedance (zt) of the transformer.
-        """
-
-        # Transformer impedance percentage
         z_pu = (self.impedance_percent / 100) * (self.s_base / self.power_rating)
-
-        # Actual transformer impedance (zt)
         zt = z_pu
-
-        # Calculate reactance using X/R ratio
         self.reactance = zt / np.sqrt(1 + (1 / self.x_over_r_ratio) ** 2)
-
-        # Calculate resistance
-        self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0  # avoids division by 0
-
-        # Calculate total impedance
+        self.resistance = self.reactance / self.x_over_r_ratio if self.x_over_r_ratio != 0 else 0
         self.zt = np.round(complex(self.resistance, self.reactance), 6)
 
     def calc_admittance(self):
-        """
-        Calculate the admittance (yt) of the transformer.
-        """
-        # Admittance is the reciprocal of impedance
-        if self.zt != 0:
-            self.yt = 1 / self.zt
-        else:
-            self.yt = complex(0, 0)
+        self.yt = 1 / self.zt if self.zt != 0 else complex(0, 0)
 
-    def calc_yprim(self, sequence = 'positive'):
-        """
-        Calculate the primitive admittance matrix (Yprim) for a specific sequence.
-        Handles ungrounded Y connections in zero sequence.
-
-        :param sequence: 'positive', 'negative', or 'zero'
-        :return: 2x2 numpy array
-        """
+    def calc_yprim(self, sequence='positive'):
         y_series = self.yt
 
         if sequence in ['positive', 'negative']:
@@ -92,15 +54,24 @@ class Transformer:
         elif sequence == 'zero':
             y11 = y22 = y12 = y21 = 0
 
-            if 'Y' in self.connection_type:
-                if self.connection_type.startswith('Y'):
-                    if self.zg1 is not None and self.zg1 > 0:
-                        y11 += 1 / (1j * self.zg1)
-                if self.connection_type.endswith('Y'):
-                    if self.zg2 is not None and self.zg2 > 0:
-                        y22 += 1 / (1j * self.zg2)
+            side1, side2 = self.connection_type.split('-')
 
-            # Include series branch if both sides are grounded or at least one
+            if side1 == 'Y':
+                if self.zg1 is None:
+                    y11 = 0
+                elif self.zg1 == 0:
+                    y11 += complex(0, 1e6)  # solid ground = high admittance
+                else:
+                    y11 += 1 / (1j * self.zg1)
+
+            if side2 == 'Y':
+                if self.zg2 is None:
+                    y22 = 0
+                elif self.zg2 == 0:
+                    y22 += complex(0, 1e6)
+                else:
+                    y22 += 1 / (1j * self.zg2)
+
             if y11 != 0 or y22 != 0:
                 y11 += y_series
                 y22 += y_series
@@ -110,20 +81,17 @@ class Transformer:
                 [y11, y12],
                 [y21, y22]
             ])
+
         else:
             raise ValueError(f"Unknown sequence type: {sequence}")
 
     def get_yprim(self, sequence='positive'):
-        """
-        Retrieve Yprim for a given sequence.
-        """
         return self.yprim_sequences.get(sequence, self.yprim_sequences['positive'])
 
     def __str__(self):
-        """
-        Return a string representation of the Transformer object.
-        """
-        return f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, x_over_r_ratio={self.x_over_r_ratio})"
+        return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, "
+                f"power_rating={self.power_rating}, impedance_percent={self.impedance_percent}, "
+                f"x_over_r_ratio={self.x_over_r_ratio}, connection_type={self.connection_type})")
 
 # Testing
 if __name__ == '__main__':

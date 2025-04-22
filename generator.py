@@ -36,7 +36,7 @@ class Generator:
         # Grounding impedance p.u.
         self.grounding_z_pu = complex(grounding_r_pu, grounding_x_pu)
 
-    def get_subtransient_reactance(self, sequence: str) -> float:
+    def get_subtransient_reactance(self, sequence: str) -> complex:
         """
         Returns subtransient reactance for the given sequence.
         """
@@ -46,7 +46,7 @@ class Generator:
             return self.x2pp_pu
         elif sequence == 'zero':
             if self.grounded:
-                return self.x0pp_pu + self.grounding_z_pu.imag
+                return self.x0pp_pu + self.grounding_z_pu
             else:
                 return self.x0pp_pu # No grounding reactance added
         else:
