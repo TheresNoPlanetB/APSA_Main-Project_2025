@@ -7,7 +7,6 @@ import numpy as np
 from tabulate import tabulate
 from sym_components import seq_to_abc
 
-
 # Circuits are Cool :)
 
 class Circuit:
@@ -27,6 +26,7 @@ class Circuit:
         self.fault_bus_v = None # Voltage at bus given fault on different bus
         self.fault_bus_vs = [] # List to store voltage values
         self.V_f = 1.0 # Pre-fault voltage in p.u.
+        self.ybus_sequences = {} # Dictionary to hold Ybus for each sequence
 
 
     def add_bus(self, name, base_kv, bus_type):
@@ -177,14 +177,23 @@ class Circuit:
                     self.ybus_faultstudy[idx, idx] += y_gen
 
             elif sequence == 'zero':
-                if generator.grounded and generator.x0_pu > 0:
-                    y_gen = 1 / (1j * generator.x0_pu)
+                if generator.grounded:
+                    z0 = generator.get_subtransient_reactance('zero')
+                    y_gen = 1 / (1j * z0)
                     self.ybus_faultstudy[idx, idx] += y_gen
 
             # Numerical stability
         if np.any(np.diag(self.ybus_faultstudy) == 0):
             raise ValueError("Singular Ybus detected. Ensure all buses have self-admittance.")
         return self.ybus_faultstudy
+
+    def calc_all_sequence_ybus(self):
+        """
+        Calculates and stores Ybus matrices for positive, negative, and zero sequence networks.
+        """
+        sequences = ['positive', 'negative', 'zero']
+        for seq in sequences:
+            self.ybus_sequences[seq] = self.calc_ybus_faultstudy(seq)
 
     def calc_zbus(self):
         #calculate z bus

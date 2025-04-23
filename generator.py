@@ -34,7 +34,7 @@ class Generator:
         self.x0pp_pu = x0pp_pu * conversion_ratio if x0pp_pu else self.x0_pu
 
         # Grounding impedance p.u.
-        self.grounding_z_pu = complex(grounding_r_pu, grounding_x_pu)
+        self.grounding_z_pu = complex(grounding_r_pu, grounding_x_pu) * (base_mva / system_base_mva)
 
     def get_subtransient_reactance(self, sequence: str) -> complex:
         """
@@ -46,7 +46,7 @@ class Generator:
             return self.x2pp_pu
         elif sequence == 'zero':
             if self.grounded:
-                return self.x0pp_pu + self.grounding_z_pu
+                return self.x0pp_pu + self.grounding_z_pu if self.grounded else self.x0pp_pu
             else:
                 return self.x0pp_pu # No grounding reactance added
         else:

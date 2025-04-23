@@ -32,6 +32,9 @@ class Transformer:
             'zero': self.calc_yprim('zero'),
         }
 
+        if self.zg1 is not None:
+            self.zg1 *= self.s_base / self.base_mva
+
     def calc_impedance(self):
         z_pu = (self.impedance_percent / 100) * (self.s_base / self.power_rating)
         zt = z_pu
