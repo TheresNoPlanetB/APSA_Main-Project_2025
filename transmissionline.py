@@ -9,8 +9,7 @@ class TransmissionLine:
     This class uses the Conductor and Geometry subclasses to determine its electrical characteristics.
     """
 
-    def __init__(self, name: str, bus1: Bus, bus2: Bus, bundle: Bundle, geometry: Geometry, length: float,
-                 connection_type: str = 'Transposed'):
+    def __init__(self, name: str, bus1: Bus, bus2: Bus, bundle: Bundle, geometry: Geometry, length: float):
         """
         Initialize the TransmissionLine object with the given parameters.
 
@@ -28,7 +27,6 @@ class TransmissionLine:
         self.bundle = bundle  # The bundle of conductors used in the transmission line
         self.geometry = geometry  # The physical arrangement of conductors in the transmission line
         self.length = length  # Length of the transmission line in miles
-        self.connection_type = connection_type
         self.f = 60
         self.S_Base = 100
 
@@ -157,7 +155,7 @@ class TransmissionLine:
         """
         Return a string representation of the TransmissionLine object.
         """
-        return f"TransmissionLine(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, length={self.length} mi, connection_type={self.connection_type})"
+        return f"TransmissionLine(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, length={self.length} mi)"
 
 if __name__ == '__main__':
 
