@@ -34,7 +34,7 @@ class Generator:
         self.x0pp_pu = x0pp_pu * conversion_ratio if x0pp_pu else self.x0_pu
 
         # Grounding impedance p.u.
-        self.grounding_z_pu = complex(grounding_r_pu, grounding_x_pu) * (base_mva / system_base_mva)
+        self.grounding_z_pu = complex(grounding_r_pu, grounding_x_pu) * 1.5
 
     def get_subtransient_reactance(self, sequence: str) -> complex:
         """
@@ -63,21 +63,3 @@ class Generator:
 
         y = 1 / (x)
         return np.array([[y, -y], [-y, y]])
-
-
-if __name__ == '__main__':
-    from bus import Bus
-
-    buses = [
-        Bus("Bus 7", 50, "PV Bus")
-    ]
-
-    generators = [
-        Generator("Gen1", buses[0], 230, 145),
-    ]
-
-    for generator in generators:
-        bus = generator.bus
-        print(
-            f"Name: {generator.name}, Bus: {bus.name}, Voltage: {bus.base_kv}V, " 
-            f"Voltage Setpoint: {generator.voltage_setpoint}V, MW Setpoint: {generator.mw_setpoint}MW")

@@ -93,7 +93,6 @@ circuit1.print_zbus_table()
 # Compute and print Y1, Z1, Y2, Z2, Y0, Z0 matrices
 print("\n--- Sequence Impedance Matrices ---")
 
-"""
 # Positive-sequence
 circuit1.calc_ybus_faultstudy('positive')
 print("\nY1 (Positive Sequence Ybus):")
@@ -111,7 +110,7 @@ Z2 = np.linalg.inv(circuit1.get_ybus_faultstudy())
 print("\nZ2 (Negative Sequence Zbus):")
 circuit1.zbus = Z2
 circuit1.print_zbus_table()
-"""
+
 # Zero-sequence
 circuit1.calc_ybus_faultstudy('zero')
 print("\nY0 (Zero Sequence Ybus):")
