@@ -179,7 +179,7 @@ class Circuit:
             elif sequence == 'zero':
                 if generator.grounded:
                     z0 = generator.get_subtransient_reactance('zero')
-                    y_gen = 1 / (1j * z0)
+                    y_gen = 1 / (z0)
                     self.ybus_faultstudy[idx, idx] += y_gen
 
             # Numerical stability

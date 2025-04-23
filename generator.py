@@ -41,14 +41,14 @@ class Generator:
         Returns subtransient reactance for the given sequence.
         """
         if sequence == 'positive':
-            return self.x1pp_pu
+            return self.x1pp_pu * 1j
         elif sequence == 'negative':
-            return self.x2pp_pu
+            return self.x2pp_pu * 1j
         elif sequence == 'zero':
             if self.grounded:
-                return self.x0pp_pu + self.grounding_z_pu if self.grounded else self.x0pp_pu
+                return self.x0pp_pu * 1j + self.grounding_z_pu
             else:
-                return self.x0pp_pu # No grounding reactance added
+                return self.x0pp_pu * 1j # No grounding reactance added
         else:
             raise ValueError("Invalid sequence type")
 
@@ -61,7 +61,7 @@ class Generator:
         if x == 0:
             raise ZeroDivisionError(f"Reactance for {sequence} sequence is zero for generator {self.name}.")
 
-        y = 1 / (1j * x)
+        y = 1 / (x)
         return np.array([[y, -y], [-y, y]])
 
 

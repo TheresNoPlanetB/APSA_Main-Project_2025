@@ -119,7 +119,7 @@ class TransmissionLine:
         self.z1 = self.z2 = complex(r_total, x_total)
 
         # Zero-sequence impedance (estimated as 2.5R + jX)
-        self.z0 = complex(2.5 * r_total, x_total)
+        self.z0 = 2.5 * complex(r_total, x_total)
 
         # Convert to per-unit
         self.z1_pu = self.z1 / self.zbase

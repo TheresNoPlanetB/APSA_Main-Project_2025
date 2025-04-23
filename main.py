@@ -21,7 +21,7 @@ circuit1.add_bus("Bus 6", 230,"PQ Bus")
 circuit1.add_bus("Bus 7", 18,"PV Bus")
 
 # Add Transformers
-circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100, connection_type = "Delta-Y", zg1 = 0.0019, zg2 = None)
+circuit1.add_transformer("T1", "Bus 1", "Bus 2", 125, 8.5, 10, 100, connection_type = "Delta-Y", zg1 = None, zg2 = 0.0019)
 circuit1.add_transformer("T2", "Bus 6", "Bus 7", 200, 10.5, 12, 100, connection_type = "Y-Delta", zg1 = None, zg2 = None)
 
 # Add Transmission Line Parameters
@@ -93,6 +93,7 @@ circuit1.print_zbus_table()
 # Compute and print Y1, Z1, Y2, Z2, Y0, Z0 matrices
 print("\n--- Sequence Impedance Matrices ---")
 
+"""
 # Positive-sequence
 circuit1.calc_ybus_faultstudy('positive')
 print("\nY1 (Positive Sequence Ybus):")
@@ -110,7 +111,7 @@ Z2 = np.linalg.inv(circuit1.get_ybus_faultstudy())
 print("\nZ2 (Negative Sequence Zbus):")
 circuit1.zbus = Z2
 circuit1.print_zbus_table()
-
+"""
 # Zero-sequence
 circuit1.calc_ybus_faultstudy('zero')
 print("\nY0 (Zero Sequence Ybus):")
