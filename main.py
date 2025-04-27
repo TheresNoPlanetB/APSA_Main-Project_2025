@@ -6,6 +6,7 @@ from solution import Solution
 from jacobian import Jacobian
 from powerflow import PowerFlow
 import numpy as np
+from plot_fault_vectors_from_circuit import generate_fault_plots
 
 
 # Create circuit
@@ -131,3 +132,6 @@ circuit1.run_asym_fault("LL", 4)  # Applies LL fault at Bus 4
 
 # Run a Double Line-to-Ground (DLG) Fault at Bus 4
 circuit1.run_asym_fault("DLG", 4)  # Applies DLG fault at Bus 4
+
+#Generate Plots
+generate_fault_plots(circuit1)
