@@ -1,12 +1,11 @@
 from circuit import Circuit
-from conductor import Conductor
 from bundle import Bundle
 from geometry import Geometry
 from solution import Solution
 from jacobian import Jacobian
 from powerflow import PowerFlow
 import numpy as np
-
+from conductor import Conductor
 
 # Create circuit
 circuit1 = Circuit("Circuit")
