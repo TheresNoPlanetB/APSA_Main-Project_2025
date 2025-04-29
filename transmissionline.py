@@ -184,5 +184,3 @@ if __name__ == '__main__':
     #print(f"Series Admittance per Unit: yseries_pu = {line1.yseries_pu}")
     #print(f"Admittance Matrix per Unit: yprim_pu = {line1.yprim_pu}")
 
-
-
