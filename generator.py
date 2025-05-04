@@ -34,21 +34,21 @@ class Generator:
         self.x0pp_pu = x0pp_pu * conversion_ratio if x0pp_pu else self.x0_pu
 
         # Grounding impedance p.u.
-        self.grounding_z_pu = complex(grounding_r_pu, grounding_x_pu)
+        self.grounding_z_pu = complex(grounding_r_pu, grounding_x_pu) * 1.5
 
     def get_subtransient_reactance(self, sequence: str) -> complex:
         """
         Returns subtransient reactance for the given sequence.
         """
         if sequence == 'positive':
-            return self.x1pp_pu
+            return self.x1pp_pu * 1j
         elif sequence == 'negative':
-            return self.x2pp_pu
+            return self.x2pp_pu * 1j
         elif sequence == 'zero':
             if self.grounded:
-                return self.x0pp_pu + self.grounding_z_pu
+                return self.x0pp_pu * 1j + self.grounding_z_pu
             else:
-                return self.x0pp_pu # No grounding reactance added
+                return self.x0pp_pu * 1j # No grounding reactance added
         else:
             raise ValueError("Invalid sequence type")
 
@@ -61,33 +61,5 @@ class Generator:
         if x == 0:
             raise ZeroDivisionError(f"Reactance for {sequence} sequence is zero for generator {self.name}.")
 
-        y = 1 / (1j * x)
+        y = 1 / (x)
         return np.array([[y, -y], [-y, y]])
-
-
-if __name__ == '__main__':
-    # Create test bus
-    bus = Bus("Bus 7", 50, "PV Bus")
-
-    # Create a generator with all required parameters
-    gen = Generator(
-        name="Gen1",
-        bus=bus,
-        voltage_setpoint=1.0,  # p.u.
-        mw_setpoint=145,       # MW
-        x1_pu=0.2,
-        x2_pu=0.2,
-        x0_pu=0.05,
-        base_mva=100,
-        grounded=True  # Optional, defaults to True
-    )
-
-    # Print to validate
-    print(f"Generator: {gen.name}")
-    print(f" Bus: {gen.bus.name}")
-    print(f" Voltage Setpoint: {gen.voltage_setpoint} pu")
-    print(f" MW Setpoint: {gen.mw_setpoint} MW")
-    print(f" X1_pu: {gen.x1_pu}")
-    print(f" X2_pu: {gen.x2_pu}")
-    print(f" X0_pu: {gen.x0_pu}")
-    print(f" Grounded: {gen.grounded}")

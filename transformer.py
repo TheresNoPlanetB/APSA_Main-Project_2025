@@ -32,6 +32,9 @@ class Transformer:
             'zero': self.calc_yprim('zero'),
         }
 
+        if self.zg1 is not None:
+            self.zg1 *= self.s_base / self.base_mva
+
     def calc_impedance(self):
         z_pu = (self.impedance_percent / 100) * (self.s_base / self.power_rating)
         zt = z_pu
@@ -62,7 +65,7 @@ class Transformer:
                 elif self.zg1 == 0:
                     y11 += complex(0, 1e6)  # solid ground = high admittance
                 else:
-                    y11 += 1 / (1j * self.zg1)
+                    y11 += 1 / (3 * 1 * self.zg1)
 
             if side2 == 'Y':
                 if self.zg2 is None:
@@ -70,12 +73,16 @@ class Transformer:
                 elif self.zg2 == 0:
                     y22 += complex(0, 1e6)
                 else:
-                    y22 += 1 / (1j * self.zg2)
+                    y22 += 1 / (3 * 1 * self.zg2)
 
             if y11 != 0 or y22 != 0:
-                y11 += y_series
-                y22 += y_series
-                y12 = y21 = -y_series
+                if y11 != 0:
+                    y11 = 1/(1/y_series + 1/y11)
+                if y22 != 0:
+                    y22 = 1/(1/y_series + 1/y22)
+                if y11 != 0 and y22 != 0:
+                    y12 = y21 = -y_series
+
 
             return np.array([
                 [y11, y12],
@@ -86,7 +93,7 @@ class Transformer:
             raise ValueError(f"Unknown sequence type: {sequence}")
 
     def get_yprim(self, sequence='positive'):
-        return self.yprim_sequences.get(sequence, self.yprim_sequences['positive'])
+        return self.yprim_sequences.get(sequence, self.yprim_sequences[sequence])
 
     def __str__(self):
         return (f"Transformer(name={self.name}, bus1={self.bus1}, bus2={self.bus2}, "

@@ -1,7 +1,7 @@
 class Settings:
 
     """
-    The settings class standardizes system-wide parameters.
+    The settings class standardizes system wide parameters.
     It has attributes frequency, base_power.
     """
 

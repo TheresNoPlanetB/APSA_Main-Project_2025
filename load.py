@@ -26,11 +26,11 @@ if __name__ == '__main__':
         ]
 
         loads = [
-            Load("Load 2", buses[0], 0, 0),
+            Load("Load 2", buses[0], 80, 0),
             Load("Load 3", buses[1], 110, 50),
             Load("Load 4", buses[2], 100, 70),
             Load("Load 5", buses[3], 100, 65),
-            Load("Load 6", buses[4], 0, 0),
+            Load("Load 6", buses[4], 23, 0),
         ]
 
         # Loop through loads and print info

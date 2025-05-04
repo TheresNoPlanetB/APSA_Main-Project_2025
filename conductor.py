@@ -33,3 +33,4 @@ if __name__ == '__main__':
         f"Name:{conductor1.name}, Diam:{conductor1.diam}, GMR:{conductor1.GMR}, resistance:{conductor1.resistance}, ampacity:{conductor1.ampacity}")
 
 
+

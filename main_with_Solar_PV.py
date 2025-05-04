@@ -1,15 +1,18 @@
-from circuit import Circuit
+
+from circuit_with_Solar_PV  import CircuitSolar
 from conductor import Conductor
 from bundle import Bundle
 from geometry import Geometry
 from solution import Solution
+
 from jacobian import Jacobian
 from powerflow import PowerFlow
 import numpy as np
 
+from solar import Solar
 
 # Create circuit
-circuit1 = Circuit("Circuit")
+circuit1 = CircuitSolar("Circuit")
 
 # Add Buses
 circuit1.add_bus("Bus 1", 20,"Slack Bus")
@@ -42,9 +45,62 @@ circuit1.add_load("Load 3", "Bus 3", 110, 50)
 circuit1.add_load("Load 4", "Bus 4", 100, 70)
 circuit1.add_load("Load 5", "Bus 5", 100, 65)
 
+
 # Add Generator
 circuit1.add_generator("G1", "Bus 1", 1.0, 100, 0.12, 0.14, 0.05, 125, grounded = True, ground_r_pu = 0)
 circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12, 0.14, 0.05, 200, grounded = True, ground_r_pu = 0.30860)
+
+
+# --- BEGIN: Solar PV Integration at Bus 1 ---
+# This code injects solar generation into Bus 1 using HOMER-style PV model
+
+
+''''''''' #Remove to run Solar  Validatiion test 1
+# Valid PV configuration: Rated 50 kW, 90% derate, 1.0 kW/m² irradiance, 45°C cell temp
+circuit1.add_solar_pv(
+    name="Solar1",
+    bus_name="Bus 1",
+    rated_capacity_kw=50,     # Rated power of PV array
+    derate_factor=0.9,        # System derating (e.g., losses due to inverter, wiring)
+    G_t=1.0,                  # Current irradiance (kW/m²)
+    G_stc=1.0,                # Standard Test Condition irradiance (kW/m²)
+    alpha_p=-0.004,           # Power temp coefficient [%/°C] converted to decimal
+    T_c=45,                   # Current cell temperature (°C)
+    T_stc=25                 # Standard Test Condition temp (°C)
+)
+'''''''''  #Remove to run Solar  Validation test 1
+
+
+#Solar  Validatiion test 2
+# Valid PV configuration: Rated 120kW, 90% derate, 0.75kW/m² irradiance, 50°C cell temp
+circuit1.add_solar_pv(
+    name="Solar1",
+    bus_name="Bus 1",
+    rated_capacity_kw=120,     # Rated power of PV array
+    derate_factor=0.9,        # System derating (e.g., losses due to inverter, wiring)
+    G_t=0.75,                  # Current irradiance (kW/m²)
+    G_stc=1.0,                # Standard Test Condition irradiance (kW/m²)
+    alpha_p=-0.004,           # Power temp coefficient [%/°C] converted to decimal
+    T_c=50,                   # Current cell temperature (°C)
+    T_stc=25                 # Standard Test Condition temp (°C)
+)
+#'''''''''  #Remove to run Solar  Validation test 2
+
+
+'''# Validation test 3: Try to add solar with invalid negative capacity → should raise ValueError
+circuit1.add_solar_pv(
+    name="SolarTest_Invalid",
+    bus_name="Bus 1",
+    rated_capacity_kw=-20,   # Invalid negative capacity
+    derate_factor=0.9,
+    G_t=1.0,
+    G_stc=1.0,
+    alpha_p=-0.004,
+    T_c=45,
+    T_stc=25
+)
+'''
+# --- END: Solar PV Integration ---
 
 # Print network summary
 print(circuit1.network_summary())
@@ -68,6 +124,7 @@ solution.initialize_system(circuit1)
 delta_P, delta_Q = solution.compute_power_mismatch_vector()
 solution.print_power_mismatch(delta_P, delta_Q)
 
+'''
 # Get bus and Ybus data
 buses = solution.buses
 ybus = solution.ybus
@@ -131,3 +188,4 @@ circuit1.run_asym_fault("LL", 4)  # Applies LL fault at Bus 4
 
 # Run a Double Line-to-Ground (DLG) Fault at Bus 4
 circuit1.run_asym_fault("DLG", 4)  # Applies DLG fault at Bus 4
+'''
