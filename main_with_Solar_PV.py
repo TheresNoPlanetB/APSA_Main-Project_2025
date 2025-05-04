@@ -54,6 +54,8 @@ circuit1.add_generator("G2", "Bus 7", 1.0, 200, 0.12, 0.14, 0.05, 200, grounded 
 # --- BEGIN: Solar PV Integration at Bus 1 ---
 # This code injects solar generation into Bus 1 using HOMER-style PV model
 
+
+''''''''' #Remove to run Solar  Validatiion test 1
 # Valid PV configuration: Rated 50 kW, 90% derate, 1.0 kW/m² irradiance, 45°C cell temp
 circuit1.add_solar_pv(
     name="Solar1",
@@ -66,10 +68,26 @@ circuit1.add_solar_pv(
     T_c=45,                   # Current cell temperature (°C)
     T_stc=25                 # Standard Test Condition temp (°C)
 )
+'''''''''  #Remove to run Solar  Validation test 1
 
-# --- Uncomment the block below to test edge case validation ---
-"""
-# Validation test: Try to add solar with invalid negative capacity → should raise ValueError
+
+#Solar  Validatiion test 2
+# Valid PV configuration: Rated 120kW, 90% derate, 0.75kW/m² irradiance, 50°C cell temp
+circuit1.add_solar_pv(
+    name="Solar1",
+    bus_name="Bus 1",
+    rated_capacity_kw=120,     # Rated power of PV array
+    derate_factor=0.9,        # System derating (e.g., losses due to inverter, wiring)
+    G_t=0.75,                  # Current irradiance (kW/m²)
+    G_stc=1.0,                # Standard Test Condition irradiance (kW/m²)
+    alpha_p=-0.004,           # Power temp coefficient [%/°C] converted to decimal
+    T_c=50,                   # Current cell temperature (°C)
+    T_stc=25                 # Standard Test Condition temp (°C)
+)
+#'''''''''  #Remove to run Solar  Validation test 2
+
+
+'''# Validation test 3: Try to add solar with invalid negative capacity → should raise ValueError
 circuit1.add_solar_pv(
     name="SolarTest_Invalid",
     bus_name="Bus 1",
@@ -81,9 +99,8 @@ circuit1.add_solar_pv(
     T_c=45,
     T_stc=25
 )
-"""
+'''
 # --- END: Solar PV Integration ---
-
 
 # Print network summary
 print(circuit1.network_summary())
